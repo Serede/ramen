@@ -1,0 +1,82 @@
+package jp.ramen;
+
+import static org.junit.Assert.*;
+
+import org.junit.Before;
+import org.junit.Test;
+
+public class GroupTest {
+	private Group g1, g2, g11, g111;
+	private User u1, u2;
+	
+	@Before
+	public void setUp() throws Exception {
+		u1 = new Sensei("u1", "pass");
+		u2 = new Sensei("u2", "pass");
+		g1 = new StudyGroup("g1", "desc", null,u1);
+		g11 = new StudyGroup("g11","desc", g1,u1);
+		g111 = new StudyGroup("g111","desc", g11,u1);
+		g2 = new StudyGroup("g2", "desc", null,u2);
+	}
+
+	@Test
+	public void testAddToInbox() {
+
+	}
+
+	@Test
+	public void testAddMember() {
+		g1.addMember(u2);
+		System.out.println(g1.getMembers());
+		assertTrue(g1.getMembers().contains(u1) && g1.getMembers().contains(u2));
+		
+	}
+	
+	@Test
+	public void testAddMemberTwice() {
+		g1.addMember(u2);
+		assertFalse(g1.addMember(u2));
+	}
+
+	@Test
+	public void testAddMemberCreator() {
+		assertFalse(g1.addMember(u1));
+	}
+	
+	@Test
+	public void testGetCode() {
+		assertTrue(g1.getCode().equals("g1"));
+	}
+
+	@Test
+	public void testGetDesc() {
+		assertTrue(g1.getDesc().equals("desc"));
+	}
+
+	@Test
+	public void testGetSupergroupNoSuperGroup() {
+		assertTrue(g1.getSupergroup()==null);
+	}
+
+	@Test
+	public void testGetSupergroup() {
+		assertTrue(g11.getSupergroup()==g1);
+	}
+	
+	@Test
+	public void testGetOwner() {
+		assertTrue(g1.getOwner()==u1);
+	}
+
+	@Test
+	public void testGetSubgroups() {
+		assertTrue(g1.getSubgroups().contains(g11));
+	}
+
+	@Test
+	public void testGetMembers() {
+		assertTrue(g1.getMembers().contains(u1));
+	}
+
+
+}
