@@ -17,16 +17,18 @@ public class MessageRequestTest {
 	private Message m;
 	private User u1;
 	private User u2;
-	
+	private Group g;
 	/**
 	 * @throws java.lang.Exception
 	 */
 	@Before
 	public void setUp() throws Exception {
 		u1 = new Student("u1", "pass");
-		u2 = new Student("u2", "pass");
-		m = new Message("subj","text",u1,u2);
-		r = new MessageRequest("subj", "text", u1, u2, m);
+		u2 = new Sensei("u2", "pass");
+		g = new SocialGroup("g1","desc",null,u1,false, true);
+		g.addMember(u2);
+		m = new Message("subj","text",u1,g);
+		r = new MessageRequest("subj", "text", u1, g, m);
 		u2.addToInbox(r);
 	}
 
