@@ -1,12 +1,20 @@
 package jp.ramen;
 
-public abstract class Request extends Message {
+import java.sql.Date;
 
-	public Request(String subject, String text, User author, Entity to) {
-		super(subject, text, author, to);
-		// TODO Auto-generated constructor stub
+public abstract class Request extends Message {
+	protected static String HEADER = null;
+
+	/* DB */
+	public Request(String subject, String text, boolean acpt, Date time) {
+		super(subject, text, acpt, time);
 	}
 	
+	public Request(String subject, String text, User author, Entity to) {
+		super(subject, text, author, to);
+	}
+
+
 	public abstract void setRequest(boolean accepted);
 
 }

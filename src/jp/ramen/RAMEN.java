@@ -3,6 +3,8 @@
  */
 package jp.ramen;
 
+import java.sql.SQLException;
+
 import jp.ramen.exceptions.*;
 
 /**
@@ -26,13 +28,6 @@ public class RAMEN {
 		
 	}
 
-	public boolean sendMessage(Entity to, String subject, String text, boolean question) {
-		Message msg = new Message(subject, text, currentUser, to);
-		MessageDAO mdb = MessageDAO.getInstance();
-		return mdb.addMessage(msg);
-	}
-	
-	
 	public boolean login(String username, String password) {
 		UserDAO db = UserDAO.getInstance();
 		//TODO: CATCH Excp
@@ -45,6 +40,12 @@ public class RAMEN {
 			return false;
 		}
 	}
+	public boolean sendMessage(Entity to, String subject, String text, boolean question) throws SQLException {
+		Message msg = new Message(subject, text, currentUser, to);
+		MessageDAO mdb = MessageDAO.getInstance();
+		return mdb.addMessage(msg);
+	}
+	
 	
 	public boolean createGroup(String name, String desc, Group parent, boolean isPrivate, boolean moderated, boolean social) {
 	//	GroupDAO db = GroupDAO.getInstance();
@@ -55,21 +56,25 @@ public class RAMEN {
 			else
 				g = new StudyGroup(name, desc, parent, currentUser);
 		}
-		catch(RAMENException e) {System.err.println(e);}
+		catch(RAMENException e) {
+			System.err.println(e);
+		}
 		//return db.addGroup(g);
 		return false;
 	}
 	
-	public boolean joinGroup(Group g)  {
+	public boolean joinGroup(Group g) throws SQLException  {
 		if(g.isPrivate()==false) {
-			return MessageDAO.getInstance().createJoinRequest(currentUser, g);
+			return MessageDAO.getInstance().addJoinRequest(currentUser, g);
 		}
 		else {
-			return g.addMember(currentUser);
+			if (g.addMember(currentUser)==false) return false;
+			if (currentUser.subscribe(g)==false) return false;
 		}
+		return true;
 	}
 	
-	public boolean sendAnswer(Entity to, String subject, String text, Question q) {
+	public boolean sendAnswer(Entity to, String subject, String text, Question q) throws SQLException {
 		Message msg = new Answer(subject, text, currentUser, to, q);
 		MessageDAO mdb = MessageDAO.getInstance();
 		return mdb.addMessage(msg);

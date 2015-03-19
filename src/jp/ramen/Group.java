@@ -8,41 +8,82 @@ public abstract class Group extends Entity {
 	private String code, desc;
 	private Group supergroup;
 	private List<Group> subgroups;
-	private User creator;
+	private User owner;
 	protected List<User> members;
 	private static final Group ADAM = null;
 	
-	public Group(String name, String desc, Group parent, User creator) {
+	public Group(String name, String desc) {
+		this(name,desc,null,null);
+	}
+	
+	public Group(String name, String desc, Group supg, User owner) {
 		super(name);
-		if(parent!=null)
-			{
-			if(parent.addSubgroup(this) == false); //TODO: Exception
-			}
+		code = generateCode(name, supg);
 		this.desc = desc;
-		this.supergroup = parent;
+		this.supergroup = supg;
+		if(supg!=null)
+			supg.addSubgroup(this); //TODO: Exception
 		this.subgroups = new ArrayList<Group>();
 		this.members = new ArrayList<User>();
-		members.add(creator);
-		this.creator = creator;
-		code = generateCode(name, parent);
+		this.owner = owner;
+		if(owner!=null)
+			members.add(owner);
+		code = generateCode(name, supg);
 	}
 	
-	private String generateCode(String name, Group parent) {
-		return (parent==ADAM? "":parent.code + ".") + name.toLowerCase().replace(" ", "_");
+	public String getCode() {
+		return code;
+	}
+
+	public void updateCode() {
+		code = generateCode(this.getName(),this.supergroup);
 	}
 	
-	private boolean addSubgroup(Group g) { 
+	private String generateCode(String name, Group supg) {
+		return (supg==ADAM? "":generateCode(supg.getName(),supg.supergroup) + ".") + name.toLowerCase().replace(" ", "_");
+	}
+	
+	public String getDesc() {
+		return desc;
+	}
+
+	public Group getSupergroup() {
+		return supergroup;
+	}
+
+	public void setSupergroup(Group supergroup) {
+		this.supergroup = supergroup;
+	}
+
+	//TODO: Review carefully. Reviewed with unmodifiable
+	public List<Group> getSubgroups() {
+		return Collections.unmodifiableList(subgroups);
+	}
+
+	public boolean addSubgroup(Group g) { 
 		if(subgroups.contains(g) == true) return false;
 		return subgroups.add(g);
 	}
-	
+
+	public User getOwner() {
+		return owner;
+	}
+
+	public void setOwner(User owner) {
+		this.owner = owner;
+	}
+
+	//TODO: Review carefully. Reviewed with unmodifiable
+	public List<User> getMembers() {
+		return Collections.unmodifiableList(members);
+	}
+
 	//public abstract boolean addMember(User u);
 	//TODO: Weirdness
 	public boolean addMember(User u) {
 		if(members.contains(u) == true) return false;
 		return members.add(u);
 	}
-	
 	
 	//It should public or private
 	@Override
@@ -54,31 +95,6 @@ public abstract class Group extends Entity {
 		return res;
 	}
 
-	public String getCode() {
-		return code;
-	}
-
-	public String getDesc() {
-		return desc;
-	}
-
-	public Group getSupergroup() {
-		return supergroup;
-	}
-	
-	public User getOwner() {
-		return creator;
-	}
-	//TODO: Review carefully. Reviewed with unmodifiable
-	public List<Group> getSubgroups() {
-		return Collections.unmodifiableList(subgroups);
-	}
-	
-	//TODO: Review carefully. Reviewed with unmodifiable
-	public List<User> getMembers() {
-		return Collections.unmodifiableList(members);
-	}
-	
 	public boolean isPrivate() {
 		return false;
 	}

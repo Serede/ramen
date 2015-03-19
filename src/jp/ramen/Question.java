@@ -4,6 +4,12 @@ import java.util.*;
 
 public class Question extends Message {
 	private List<Answer> answers;
+	
+	/* DB */
+	public Question(String subject, String text, Date time) {
+		super(subject,text,true,time);
+	}
+	
 	public Question(String subject, String text, User author, Entity to) {
 		//TODO: check entity == group
 		super(subject, text, author, to);

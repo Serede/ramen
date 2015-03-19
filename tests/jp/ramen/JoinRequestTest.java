@@ -14,8 +14,8 @@ public class JoinRequestTest {
 	public void setUp() throws Exception {
 		u1 = new Student("u1", "pass");
 		u2 = new Student("u2", "pass");
-		g = new SocialGroup("g", "desc", null,u1 );
-		r = new JoinRequest("msg", "text", u2, u1, u2, g);
+		g = new SocialGroup("g", "desc", null, u1, true, false);
+		r = new JoinRequest("msg", "text", u2, g);
 	}
 
 	@Test

@@ -10,30 +10,30 @@ import jp.ramen.exceptions.*;
  *
  */
 public class SocialGroup extends Group {
-	private boolean isPrivate=false;
-	private boolean moderated=false;
-	public SocialGroup(String name, String desc, Group parent, User creator) {
-		super(name, desc, parent, creator);
-		// TODO Auto-generated constructor stub
+	private boolean priv=false;
+	private boolean mod=false;
+	
+	public SocialGroup(String name, String desc, boolean priv, boolean mod) throws NotEnoughPermissions{
+		this(name,desc,null,null,priv,mod);
 	}
 
-	public SocialGroup(String name, String desc, Group parent, User creator, boolean isPrivate, boolean moderated) throws NotEnoughPermissions {
-		super(name, desc, parent, creator);
+	public SocialGroup(String name, String desc, Group parent, User owner, boolean priv, boolean mod) throws NotEnoughPermissions {
+		super(name, desc, parent, owner);
 		
-		if(creator instanceof Sensei) throw new NotEnoughPermissions();
-		this.isPrivate = parent==null? isPrivate:parent.isPrivate(); //TODO: inheritance
-		this.moderated = parent==null? moderated:parent.isModerated();
+		if(owner instanceof Sensei) throw new NotEnoughPermissions();
+		this.priv = parent==null? priv:parent.isPrivate(); //TODO: inheritance
+		this.mod = parent==null? mod:parent.isModerated();
 	}
 		
 	@Override
 	public boolean isPrivate() {
-		return isPrivate;
+		return priv;
 	}
 	
 	
 	@Override
 	public boolean isModerated() {
-		return moderated;
+		return mod;
 	}
 
 }

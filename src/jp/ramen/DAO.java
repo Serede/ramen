@@ -1,5 +1,6 @@
 package jp.ramen;
 
+import java.io.*;
 import java.sql.*;
 
 public class DAO {
@@ -33,12 +34,22 @@ public class DAO {
 
 	public static void init(String path) throws SQLException {
 		UserDAO udb;
+		GroupDAO gdb;
+		MessageDAO mdb;
 		Connection c = null;
 		try {
 			c = DriverManager.getConnection("jdbc:h2:" + path + "/" + DB_NAME
 					+ ";IFEXISTS=TRUE", DB_USER, DB_PASS);
 			udb = UserDAO.getInstance();
+			gdb = GroupDAO.getInstance();
+			mdb = MessageDAO.getInstance();
 			udb.load();
+			gdb.load();
+			mdb.load();
+			udb.link(gdb, mdb);
+			gdb.link(udb, mdb);
+			mdb.link(udb, gdb);
+			gdb.updateCodes();
 		} catch (SQLException e) { //TODO: ex
 			throw e;
 		} finally {
@@ -47,12 +58,34 @@ public class DAO {
 	}
 	
 	public static void main(String[] args) {
+		String file = "fs";
+		String path = "~/ramen";
+		File firstStart;
+		BufferedReader buf = null;
+		PrintWriter writer = null;
 		try {
-			create("~/ramen","students.txt","professors.txt");
-		} catch (SQLException e) {
+			firstStart = new File(file);
+			if(firstStart.exists() && !firstStart.isDirectory()) {
+				buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+				if((path = buf.readLine()) != null)
+					init(path);
+				return;
+			} else {
+				create(path,"students.txt","professors.txt");
+				writer = new PrintWriter(file,"UTF-8");
+				writer.println(path);
+			}
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			try {
+				if(buf!=null) buf.close();
+				if(writer!=null) writer.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 	}
 }
-

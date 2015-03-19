@@ -23,7 +23,7 @@ public class UserTest {
 	public void setUp() throws Exception {
 		u1 = new Student("user", "pass", true);
 		u2 = new Student("2", "pass", true);
-		g1 = new SocialGroup("group1", "desc", null, u2);
+		g1 = new SocialGroup("group1", "desc", null, u2, false, false);
 	}
 
 

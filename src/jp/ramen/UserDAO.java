@@ -8,25 +8,30 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * @author e303132
  *
  */
 public class UserDAO extends DAO {
+	public static long MAX_UID;
 	private static UserDAO udb = null;
 	private Map<Long, User> users;
 
 	private UserDAO() {
-		this.users = new HashMap<>();
+		this.users = new TreeMap<>();
 	}
 
 	public static UserDAO getInstance() {
 		if (udb == null)
 			udb = new UserDAO();
 		return udb;
+	}
+	
+	public User getUser(Long uid) {
+		return users.get(uid);
 	}
 
 	public User getUser(String name) {
@@ -35,6 +40,14 @@ public class UserDAO extends DAO {
 				return u;
 		}
 		return null; // TODO: Exception
+	}
+	
+	public Long getID(User u) {
+		for (Map.Entry<Long,User> e : users.entrySet()) {
+			if (u.equals(e.getValue()))
+				return e.getKey();
+		}
+		return 0L; // TODO: Exception
 	}
 
 	public static String generateSHA(String s) { // TODO para luego cambiar el
@@ -62,10 +75,10 @@ public class UserDAO extends DAO {
 			buf = new BufferedReader(new InputStreamReader(new FileInputStream(
 					file)));
 			db = DAO.connect();
+			stmt = db.createStatement();
 			while ((line = buf.readLine()) != null) {
 				String[] words = line.split(":");
 				if (words.length == 2) {
-					stmt = db.createStatement();
 					stmt.executeUpdate("INSERT INTO ENTITIES VALUES()");
 					ResultSet rs = stmt
 							.executeQuery("SELECT MAX(EID) FROM ENTITIES");
@@ -78,6 +91,10 @@ public class UserDAO extends DAO {
 					}
 				}
 			}
+			stmt = db.createStatement();
+			ResultSet rs = stmt.executeQuery("SELECT MAX(UID) FROM USERS");
+			if(rs.next())
+				MAX_UID = rs.getLong(1);
 			buf.close();
 		} catch (Exception e) { // TODO: ex
 			e.printStackTrace();
@@ -97,13 +114,12 @@ public class UserDAO extends DAO {
 			stmt = db.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT UID,SEN,NAME,PASS FROM USERS");
 			while(rs.next()) {
-				if(rs.getBoolean(2)) {
-					Sensei s = new Sensei(rs.getString(3), rs.getString(4));
-					users.put(rs.getLong(1), s);
-				} else {
-					Student s = new Student(rs.getString(3), rs.getString(4));
-					users.put(rs.getLong(1), s);
-				}
+				User u = null;
+				if(rs.getBoolean(2))
+					u = new Sensei(rs.getString(3), rs.getString(4));
+				else
+					u = new Student(rs.getString(3), rs.getString(4));
+				users.put(rs.getLong(1), u);
 			}
 			
 		} catch (SQLException e) {
@@ -115,7 +131,7 @@ public class UserDAO extends DAO {
 		}
 	}
 	
-	public void link() {
+	public void link(GroupDAO gdb, MessageDAO mdb) {
 		Connection db = null;
 		Statement stmt = null;
 		
@@ -124,14 +140,24 @@ public class UserDAO extends DAO {
 			stmt = db.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT UID,BLOCK,SUBS,SENT,INBOX FROM USERS");
 			while(rs.next()) {
+				User u = users.get(rs.getLong(1));
+				/* BLOCK */
 				for (Long id : (Long[])rs.getArray(2).getArray()) {
-					users.get(rs.getLong(1)).block(users.get(id));
+					u.block(users.get(id));
+				}
+				/* SUBS */
+				for (Long id : (Long[])rs.getArray(3).getArray()) {
+					u.subscribe(gdb.getGroup(id));
+				}
+				/* TODO: SENT */
+				/* INBOX */
+				for (Long id : (Long[])rs.getArray(5).getArray()) {
+					u.addToInbox(mdb.getMessage(id));
 				}
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
 	}
 }

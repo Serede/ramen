@@ -11,8 +11,8 @@ public class SocialGroupTest {
 	
 	@Before
 	public void setUp() throws Exception {
-		u1 = new Student("u1", "pass");
-		g = new SocialGroup("subj","desc",null, u1, true, true);
+		u1 = new Student("u1","pass");
+		g = new SocialGroup("subj","desc",null,u1,true,true);
 	}
 
 	@Test

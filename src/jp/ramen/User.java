@@ -13,10 +13,11 @@ import java.util.List;
  */
 public abstract class User extends Entity {
 	private String pass;
-	private List<LocalMessage> inbox;
-	private List<Group> subscriptions;
 	private List<Entity> blocked;
+	private List<Group> subscriptions;
+	private List<LocalMessage> inbox;
 	
+	/* DB */
 	public User(String name, String pass) {
 		this(name,pass,false);
 	}
