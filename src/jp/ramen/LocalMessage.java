@@ -9,6 +9,7 @@ public class LocalMessage {
 		this.reference = m;
 		this.read = false;
 	}
+	
 	public Message getReference() {
 		return this.reference;
 	}
@@ -23,5 +24,9 @@ public class LocalMessage {
 		return read;
 	}
 	
+	@Override 
+	public String toString() {
+		return "["+ read + "]" + reference;
+	} 
 	//TODO: Complete?
 }

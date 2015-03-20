@@ -1,7 +1,7 @@
 package jp.ramen.exceptions;
 
 public class InvalidFormat extends RAMENException {
-	private static final String text = "The format of the file is not the expected one";
+	private static final String text = "The file format was incorrect.";
 	public InvalidFormat() {
 		super(text);
 	}

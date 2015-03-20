@@ -1,21 +1,25 @@
 package jp.ramen;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.sql.*;
 
-public class MessageDAO extends DAO {
+import jp.ramen.exceptions.InvalidMessage;
+
+public class MessageDAO {
 	private final byte NONE_TYPE = 0;
 	private final byte JREQ_TYPE = 1;
 	private final byte MREQ_TYPE = 2;
 	private final byte ANSW_TYPE = 3;
 	private final byte QUES_TYPE = 4;
-	private final String DEFAULT_JOIN_TEXT;
+	private final String JOIN_TEXT;
 	private static MessageDAO mdb = null;
 	private Map<Long, Message> messages;
 
 	private MessageDAO() {
-		DEFAULT_JOIN_TEXT = " wants to join "; // TODO from file
+		JOIN_TEXT = " wants to join "; // TODO from file
+		messages = new HashMap<>();
 	}
 
 	public static MessageDAO getInstance() {
@@ -36,19 +40,20 @@ public class MessageDAO extends DAO {
 		return 0L; // TODO: Exception
 	}
 
-	public void load() throws SQLException {
+	public void load() throws SQLException, InvalidMessage {
 		Connection db = null;
 		Statement stmt = null;
+		DAO ddb = DAO.getInstance();
 		
 		try {
-			db = DAO.connect();
+			db = ddb.connect();
 			stmt = db.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT MID,TYPE,SUBJ,TEXT,ACPT,TIME FROM MESSAGES");
 			while(rs.next()) {
 				Message m = null;
 				switch(rs.getByte(2)) {
 					case NONE_TYPE:
-						m = new Message(rs.getString(3),rs.getString(4),rs.getBoolean(5),rs.getDate(6));
+						m = new Message(rs.getString(3),rs.getString(4),rs.getBoolean(5),rs.getTimestamp(6));
 						break;
 					case JREQ_TYPE:
 						m = new JoinRequest(rs.getString(3),rs.getString(4),rs.getDate(6));
@@ -67,66 +72,70 @@ public class MessageDAO extends DAO {
 			}
 			
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw e;
 		} finally {
-			stmt.close();
-			db.close();
+			if(stmt != null) stmt.close();
+			if(db != null) db.close();
 		}
 	}
 	
-	public void link(UserDAO udb, GroupDAO gdb) {
+	public void link(UserDAO udb, GroupDAO gdb) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
+		DAO ddb = DAO.getInstance();
 		
 		try {
-			db = DAO.connect();
+			db = ddb.connect();
 			stmt = db.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT UID,TYPE,AUTH,TO,REF FROM MESSAGES");
+			ResultSet rs;
+			
+			/* FROM AND TO */
+			rs = stmt.executeQuery("SELECT MID,TYPE,AUTH,TO FROM MESSAGES");
 			while(rs.next()) {
 				Message m = messages.get(rs.getLong(1));
-				/* AUTH */
-				m.setAuthor(udb.getUser(rs.getLong(3)));
-				/* TO */
 				long to;
+				m.setAuthor(udb.getUser(rs.getLong(3)));
 				if((to = rs.getLong(4))>UserDAO.MAX_UID)
 					m.setTo(gdb.getGroup(to));
 				else
 					m.setTo(udb.getUser(to));
-				/* REF */
-				long ref = rs.getLong(5);
+			}
+			
+			/* REFS */
+			rs = stmt.executeQuery("SELECT M.MID,TYPE,`REF` FROM MESSAGES AS M NATURAL JOIN M_REFS AS R");
+			while(rs.next()) {
+				Message m = messages.get(rs.getLong(1));
 				switch(rs.getByte(2)) {
 					case JREQ_TYPE:
-						((JoinRequest)m).setRef(gdb.getGroup(ref));
+						((JoinRequest)m).setRef(gdb.getGroup(rs.getLong(3)));
 						break;
 					case MREQ_TYPE:
-						((MessageRequest)m).setRef(mdb.getMessage(ref));
+						((MessageRequest)m).setRef(mdb.getMessage(rs.getLong(3)));
 						break;
 					case ANSW_TYPE:
-						((Answer)m).setRef((Question) mdb.getMessage(ref));
+						((Answer)m).setRef((Question) mdb.getMessage(rs.getLong(3)));
 						break;
 					default:
 				}
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw e;
+		} finally {
+			if(stmt != null) stmt.close();
+			if(db != null) db.close();
 		}
 	}
 	
 	public boolean addMessage(Message msg) throws SQLException {
-		if (msg.getTo().isModerated()) {
-			return mdb.addMessageRequest(msg);
-		} else {
 			Connection db = null;
 			Statement stmt = null;
+			ResultSet rs;
+			DAO ddb = DAO.getInstance();
 			byte type;
 			long ref;
 			
-			if(msg.getTo().addToInbox(msg)==false) return false;
-			
 			try {
-				db = DAO.connect();
+				db = ddb.connect();
 				stmt = db.createStatement();
 				UserDAO udb = UserDAO.getInstance();
 				GroupDAO gdb = GroupDAO.getInstance();
@@ -148,46 +157,186 @@ public class MessageDAO extends DAO {
 					ref = 0;
 				}
 				
-				String query = "INSERT INTO MESSAGES VALUES("
+				String date = new Timestamp(msg.getTime().getTimeInMillis()).toString();
+				date = date.substring(0, date.lastIndexOf('.'));
+				
+				String insert_message = "INSERT INTO MESSAGES VALUES("
+						+ "DEFAULT"
+						+ ","
 						+ type
-						+ ",'"
-						+ msg.getSubject()
-						+ "','"
-						+ msg.getText()
-						+ "',"
+						+ ","
+						+ "'" + msg.getSubject() + "'"
+						+ ","
+						+ "'" + msg.getText() + "'"
+						+ ","
 						+ msg.isAccepted()
+						+ ","
+						+ "TIMESTAMP '" + date + "'" 
 						+ ","
 						+ udb.getID(msg.author)
 						+ ","
 						+ ((msg.getTo() instanceof User) ?
 								udb.getID((User) msg.getTo()) :
 									gdb.getID((Group) msg.getTo()))
-						+ ","
-						+ ref
 						+ ")";
-				stmt.executeUpdate(query);
+				
+				stmt.executeUpdate(insert_message);
+				stmt.close();
+				
+				long mid;
+				stmt = db.createStatement();
+				rs = stmt.executeQuery("SELECT MAX(MID) FROM MESSAGES");
+				if(rs.next())
+					mid = rs.getLong(1);
+				else
+					return false;
+				
+				if(ref != 0) {
+					String add_referece = "INSERT INTO M_REFS VALUES("
+							+ mid
+							+ ","
+							+ ref
+							+ ")";
+					stmt.executeUpdate(add_referece);
+				}
+				
+				messages.put(mid,msg);
+				if(msg.isAccepted())
+					return addLocalMessage(msg);
 				return true;
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return false;
+				throw e;
 			} finally {
-				stmt.close();
-				db.close();
+				if(stmt != null) stmt.close();
+				if(db != null) db.close();
 			}
-		}
 	}
 
-	private boolean addMessageRequest(Message msg) throws SQLException {
+	private boolean addLocalMessage(Message m) throws SQLException {
+		Connection db = null;
+		Statement stmt = null;
+		DAO ddb = DAO.getInstance();
+		UserDAO udb = ddb.getUdb();
+		Entity to;
+		
+		try {
+			db = ddb.connect();
+			stmt = db.createStatement();
+			if((to = m.getTo()) instanceof User) {
+				String query = "INSERT INTO U_INBOX VALUES("
+						+ udb.getID((User) m.getTo())
+						+ ","
+						+ mdb.getID(m)
+						+ ","
+						+ false
+						+ ")";
+				stmt.execute(query);
+			} else {
+				for(User u : ((Group)to).getMembers()) {
+					String query = "INSERT INTO U_INBOX VALUES("
+							+ udb.getID(u)
+							+ ","
+							+ mdb.getID(m)
+							+ ","
+							+ false
+							+ ")";
+					stmt.execute(query);
+				}
+			}
+			to.addToInbox(m);
+			m.getAuthor().addSent(m);
+
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		} finally {
+			stmt.close();
+			db.close();
+		}		
+	}
+	
+	public boolean readLocalMessage(User u, Message m) throws SQLException {
+		Connection db = null;
+		Statement stmt = null;
+		DAO ddb = DAO.getInstance();
+		UserDAO udb = ddb.getUdb();
+		String query = "UPDATE U_INBOX SET READ=TRUE WHERE "
+				+ "UID=" + udb.getID(u)
+				+ " AND "
+				+ "MSG=" + mdb.getID(m);
+		try {
+			db = ddb.connect();
+			stmt = db.createStatement();
+			stmt.execute(query);
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		} finally {
+			stmt.close();
+			db.close();
+		}		
+	}
+	
+	public boolean delLocalMessage(User u, Message m) throws SQLException {
+		Connection db = null;
+		Statement stmt = null;
+		DAO ddb = DAO.getInstance();
+		UserDAO udb = ddb.getUdb();
+		String query = "DELETE FROM U_INBOX WHERE "
+				+ "UID=" + udb.getID(u)
+				+ " AND "
+				+ "MSG=" + mdb.getID(m);
+		try {
+			db = ddb.connect();
+			stmt = db.createStatement();
+			stmt.execute(query);
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		} finally {
+			stmt.close();
+			db.close();
+		}		
+	}
+	
+	public boolean addMessageRequest(Message msg) throws SQLException, InvalidMessage {
 		Request req = new MessageRequest(msg.getSubject(), msg.getText(),
 				msg.getAuthor(), msg.getTo(), msg);
-		return addMessage(req);
+		msg.setAccepted(false);
+		if(addMessage(msg)==false) return false;
+		if(addMessage(req)==false) return false;
+		return true;
 	}
 
-	public boolean addJoinRequest(User u, Group g) throws SQLException {
+	public boolean addJoinRequest(User u, Group g) throws SQLException, InvalidMessage {
 		Request req = new JoinRequest(u.getName(), u.getName()
-				+ DEFAULT_JOIN_TEXT + g.getCode(), u, g);
+				+ JOIN_TEXT + g.getCode(), u, g);
 		return addMessage(req);
 	}
 
+	public boolean acceptMessage(MessageRequest mr) throws SQLException {
+		Connection db = null;
+		Statement stmt = null;
+		DAO ddb = DAO.getInstance();
+		String query = "UPDATE MESSAGES SET ACPT=TRUE WHERE "
+				+ "MID=" + mdb.getID(mr.getRef());
+		try {
+			db = ddb.connect();
+			stmt = db.createStatement();
+			stmt.execute(query);
+			mr.setRequest(true);
+			addLocalMessage(mr.getRef());
+			return true;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		} finally {
+			stmt.close();
+			db.close();
+		}		
+	}
+	
 }

@@ -1,15 +1,15 @@
 package jp.ramen;
 
-import jp.ramen.exceptions.NotEnoughPermissions;
+import jp.ramen.exceptions.ForbiddenAction;
 
 public class StudyGroup extends Group {
 	public StudyGroup(String name, String desc) {
 		super(name,desc);
 	}
 	
-	public StudyGroup(String name, String desc, Group parent, User creator) throws NotEnoughPermissions {
+	public StudyGroup(String name, String desc, Group parent, User creator) throws ForbiddenAction {
 		super(name, desc, parent, creator);
-		if(creator instanceof Student) throw new NotEnoughPermissions();
+		if(creator instanceof Student) throw new ForbiddenAction();
 	}
 
 }

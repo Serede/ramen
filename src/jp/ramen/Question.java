@@ -2,16 +2,18 @@ package jp.ramen;
 
 import java.util.*;
 
+import jp.ramen.exceptions.InvalidMessage;
+
 public class Question extends Message {
 	private List<Answer> answers;
 	
 	/* DB */
-	public Question(String subject, String text, Date time) {
+	public Question(String subject, String text, Date time) throws InvalidMessage {
 		super(subject,text,true,time);
+		answers = new ArrayList<Answer>();
 	}
 	
-	public Question(String subject, String text, User author, Entity to) {
-		//TODO: check entity == group
+	public Question(String subject, String text, User author, Entity to) throws InvalidMessage {
 		super(subject, text, author, to);
 		answers = new  ArrayList<Answer>();
 	}
@@ -30,7 +32,7 @@ public class Question extends Message {
 	}
 
 	public int howManyDidntAnswer() {
-		return  this.whoDidntAnswer().size() - answers.size();
+		return  this.whoDidntAnswer().size();
 	}
 
 	public List<User> whoAnswered() {

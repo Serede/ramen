@@ -11,11 +11,7 @@ import java.sql.*;
 import java.util.Map;
 import java.util.TreeMap;
 
-/**
- * @author e303132
- *
- */
-public class UserDAO extends DAO {
+public class UserDAO {
 	public static long MAX_UID;
 	private static UserDAO udb = null;
 	private Map<Long, User> users;
@@ -36,7 +32,7 @@ public class UserDAO extends DAO {
 
 	public User getUser(String name) {
 		for (User u : users.values()) {
-			if (u.getName() == name)
+			if (u.getName().equals(name))
 				return u;
 		}
 		return null; // TODO: Exception
@@ -50,19 +46,16 @@ public class UserDAO extends DAO {
 		return 0L; // TODO: Exception
 	}
 
-	public static String generateSHA(String s) { // TODO para luego cambiar el
-													// otro fichero
+	public static String generateSHA(String s) {
+		MessageDigest md;
 		try {
-			MessageDigest md = MessageDigest.getInstance("SHA-1");
+			md = MessageDigest.getInstance("SHA-1");
 			md.reset();
 			md.update(s.getBytes("UTF-8"));
 			return new BigInteger(1, md.digest()).toString(16);
-		} catch (NoSuchAlgorithmException e) {
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
+		} catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+			return null;
 		}
-		return null;
 	}
 
 	public void populate(String file, boolean sensei) throws Exception {
@@ -70,49 +63,56 @@ public class UserDAO extends DAO {
 		String line = null;
 		Connection db = null;
 		Statement stmt = null;
+		DAO ddb = DAO.getInstance();
 
 		try {
-			buf = new BufferedReader(new InputStreamReader(new FileInputStream(
-					file)));
-			db = DAO.connect();
+			buf = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+			db = ddb.connect();
 			stmt = db.createStatement();
+			
 			while ((line = buf.readLine()) != null) {
 				String[] words = line.split(":");
 				if (words.length == 2) {
 					stmt.executeUpdate("INSERT INTO ENTITIES VALUES()");
-					ResultSet rs = stmt
-							.executeQuery("SELECT MAX(EID) FROM ENTITIES");
+					ResultSet rs = stmt.executeQuery("SELECT MAX(EID) FROM ENTITIES");
 					if (rs.next()) {
 						String query = "INSERT INTO USERS VALUES("
-								+ rs.getLong(1) + "," + sensei + ",'"
-								+ words[0] + "','" + generateSHA(words[1])
-								+ "',NULL,NULL,NULL,NULL)";
+								+ rs.getLong(1)
+								+ ","
+								+ sensei
+								+ ","
+								+ "'" + words[0] + "'"
+								+ ","
+								+ "'" + generateSHA(words[1]) + "'"
+								+ ")";
 						stmt.executeUpdate(query);
 					}
 				}
 			}
+			
 			stmt = db.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT MAX(UID) FROM USERS");
 			if(rs.next())
 				MAX_UID = rs.getLong(1);
-			buf.close();
 		} catch (Exception e) { // TODO: ex
-			e.printStackTrace();
+			throw e;
 		} finally {
-			stmt.close();
-			db.close();
-			buf.close();
+			if(stmt != null) stmt.close();
+			if(db != null) db.close();
+			if(buf != null) buf.close();
 		}
 	}
 
 	public void load() throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
+		DAO ddb = DAO.getInstance();
 		
 		try {
-			db = DAO.connect();
+			db = ddb.connect();
 			stmt = db.createStatement();
 			ResultSet rs = stmt.executeQuery("SELECT UID,SEN,NAME,PASS FROM USERS");
+			
 			while(rs.next()) {
 				User u = null;
 				if(rs.getBoolean(2))
@@ -123,41 +123,106 @@ public class UserDAO extends DAO {
 			}
 			
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw e;
 		} finally {
-			stmt.close();
-			db.close();
+			if(stmt != null) stmt.close();
+			if(db != null) db.close();
 		}
 	}
 	
-	public void link(GroupDAO gdb, MessageDAO mdb) {
+	public void link(GroupDAO gdb, MessageDAO mdb) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
+		DAO ddb = DAO.getInstance();
 		
 		try {
-			db = DAO.connect();
+			db = ddb.connect();
 			stmt = db.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT UID,BLOCK,SUBS,SENT,INBOX FROM USERS");
+			ResultSet rs;
+			
+			/* BLOCK LIST */
+			rs = stmt.executeQuery("SELECT * FROM U_BLOCK");
 			while(rs.next()) {
-				User u = users.get(rs.getLong(1));
-				/* BLOCK */
-				for (Long id : (Long[])rs.getArray(2).getArray()) {
-					u.block(users.get(id));
-				}
-				/* SUBS */
-				for (Long id : (Long[])rs.getArray(3).getArray()) {
-					u.subscribe(gdb.getGroup(id));
-				}
-				/* TODO: SENT */
-				/* INBOX */
-				for (Long id : (Long[])rs.getArray(5).getArray()) {
-					u.addToInbox(mdb.getMessage(id));
-				}
+				User u = udb.getUser(rs.getLong(1));
+				Entity e;
+				Long eid;
+				if((eid = rs.getLong(2)) > MAX_UID)
+					e = gdb.getGroup(eid);
+				else
+					e = udb.getUser(eid);
+				u.block(e);
+			}
+			
+			/* INBOX */
+			rs = stmt.executeQuery("SELECT * FROM U_INBOX");
+			while(rs.next()) {
+				User u = udb.getUser(rs.getLong(1));
+				Message m = mdb.getMessage(rs.getLong(2));
+				u.addToInbox(m,rs.getBoolean(3));
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw e;
+		} finally {
+			if(stmt != null) stmt.close();
+			if(db != null) db.close();
+		}
+	}
+	
+	public boolean addBlock(User u, Entity blck) throws SQLException {
+		Connection db = null;
+		Statement stmt = null;
+		DAO ddb = DAO.getInstance();
+					
+		try {
+			db = ddb.connect();
+			stmt = db.createStatement();
+			GroupDAO gdb = GroupDAO.getInstance();
+
+			stmt = db.createStatement();
+			String insert_block = "INSERT INTO U_BLOCK VALUES("
+					+ udb.getID(u)
+					+ ","
+					+ ((blck instanceof User) ?
+							udb.getID((User) blck) :
+									gdb.getID((Group) blck))
+					+ ")";
+			stmt.executeUpdate(insert_block);
+			
+			return u.block(blck);
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			if(stmt != null) stmt.close();
+			if(db != null) db.close();
+		}
+	}
+	
+	public boolean delBlock(User u, Entity blck) throws SQLException {
+		Connection db = null;
+		Statement stmt = null;
+		DAO ddb = DAO.getInstance();
+					
+		try {
+			db = ddb.connect();
+			stmt = db.createStatement();
+			GroupDAO gdb = GroupDAO.getInstance();
+
+			stmt = db.createStatement();
+			String delete_block = "DELETE FROM U_BLOCK WHERE "
+					+ "`UID`=" + udb.getID(u)
+					+ "AND"
+					+ "BLCK=" + ((blck instanceof User) ?
+							udb.getID((User) blck) :
+									gdb.getID((Group) blck))
+					+ ")";
+			stmt.executeUpdate(delete_block);
+
+			return u.unblock(blck);
+		} catch (SQLException e) {
+			throw e;
+		} finally {
+			if(stmt != null) stmt.close();
+			if(db != null) db.close();
 		}
 	}
 }

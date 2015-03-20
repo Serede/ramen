@@ -85,9 +85,14 @@ public abstract class Group extends Entity {
 		return members.add(u);
 	}
 	
+	public boolean delMember(User u) {
+		if(members.contains(u) == false) return false;
+		return members.remove(u);
+	}
+	
 	//It should public or private
 	@Override
-	public boolean addToInbox(Message m) {
+	public boolean addToInbox(Message m){
 		boolean res = true;
 		for (User u : members) {
 			res = u.addToInbox(m) & res;
@@ -96,6 +101,10 @@ public abstract class Group extends Entity {
 	}
 
 	public boolean isPrivate() {
+		return false;
+	}
+	
+	public boolean isModerated() {
 		return false;
 	}
 	
