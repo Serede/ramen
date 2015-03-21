@@ -4,13 +4,12 @@
 package jp.ramen;
 
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.List;
 
 import jp.ramen.exceptions.*;
 
-/**
- * @author e303132
- *
- */
+
 public class RAMEN {
 	private static RAMEN app=null;
 	private static DAO ddb=null;
@@ -38,10 +37,11 @@ public class RAMEN {
 		ddb.init();
 	}
 
-	public boolean login(String username, String password) {
+	public boolean login(String username, String password) throws InvalidLogin {
 		UserDAO udb = ddb.getUdb();
 		
 		User u = udb.getUser(username);
+		if(u==null) throw new InvalidLogin();
 		if(u.checkPassword(password)==true) {
 			currentUser = u;
 			return true;
@@ -63,16 +63,16 @@ public class RAMEN {
 		target = msg.getTo();
 		
 		if (target instanceof Group && ((Group) target).getMembers().contains(currentUser)) {
-			if (target instanceof SocialGroup && !question) {
+			if (target instanceof SocialGroup && !question) { //if(target.isSocial())
 				if (((Group) target).isModerated())
 					return mdb.addMessageRequest(msg);
 				else
 					return mdb.addMessage(msg);
-			} else if (target instanceof StudyGroup) {
-				if (currentUser instanceof Sensei) {
+			} else if (target instanceof StudyGroup) { //else if(!target.isSocial())
+				if (currentUser instanceof Sensei) {   //currentUser.canSendMessagesStudyGroup(study=true)
 					if (!question)
 						return mdb.addMessage(msg);
-					else if (question && ((Group) target).getOwner().equals(currentUser))
+					else if (question && ((Group) target).getOwner().equals(currentUser)) 
 						return mdb.addMessage(msg);
 					else
 						throw new ForbiddenAction();
@@ -80,7 +80,7 @@ public class RAMEN {
 					throw new ForbiddenAction();
 			} else
 				throw new ForbiddenAction();
-		} else if (target instanceof User) {
+		} else if (target instanceof User) { //????
 			return mdb.addMessage(msg);
 		} else
 			throw new ForbiddenAction();
@@ -97,7 +97,8 @@ public class RAMEN {
 		Group g = null;
 		GroupDAO gdb = ddb.getGdb();
 		
-		if(social && supg==null || supg instanceof SocialGroup)
+		if(social && supg==null || supg instanceof SocialGroup) 
+			//check if the owner is the same in the supg
 			g = new SocialGroup(name, desc, supg, currentUser, priv, mod);
 		else
 			g = new StudyGroup(name, desc, supg, currentUser);
@@ -119,10 +120,14 @@ public class RAMEN {
 		}
 	}
 	
-	public boolean sendAnswer(Entity to, String subject, String text, Question q) throws SQLException, InvalidMessage {
+	public boolean sendAnswer(Entity to, String subject, String text, Question q) throws SQLException, InvalidMessage, ForbiddenAction {
 		Message msg = new Answer(subject, text, currentUser, to, q);
-		MessageDAO mdb = ddb.getMdb();
-		return mdb.addMessage(msg);
+		if (currentUser.canAnswer()
+				&& ((Group) to).getMembers().contains(currentUser)) {
+			MessageDAO mdb = ddb.getMdb();
+			return mdb.addMessage(msg);
+		}
+		throw new ForbiddenAction();
 	}
 	
 	public boolean handleRequest(Request r, boolean accepted) throws SQLException {
@@ -130,10 +135,10 @@ public class RAMEN {
 		GroupDAO gdb = ddb.getGdb();
 
 		if(accepted) {
-			if(r instanceof MessageRequest) {
+			if(r instanceof MessageRequest) { //r.requestingMessage()
 				mdb.acceptMessage((MessageRequest) r);
 				mdb.delLocalMessage(currentUser, r);
-			} else if(r instanceof JoinRequest) {
+			} else if(r instanceof JoinRequest) { //r,requestingGroup()
 				gdb.addMember(((JoinRequest) r).getRef(), r.getAuthor());
 				r.setRequest(accepted);
 				mdb.delLocalMessage(currentUser, r);
@@ -156,5 +161,17 @@ public class RAMEN {
 	}
 	public User getCurrentUser() {
 		return currentUser;
+	}
+	
+	public Collection<User> listUsers() {
+		return ddb.getUdb().listUsers();
+	}
+	
+	public Collection<Group> listGroups() {
+		return ddb.getGdb().listGroups();
+	}
+	
+	public List<LocalMessage> getInbox() {
+		return currentUser.getInbox();
 	}
 }

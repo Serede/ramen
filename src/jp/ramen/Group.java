@@ -107,5 +107,12 @@ public abstract class Group extends Entity {
 	public boolean isModerated() {
 		return false;
 	}
+
+	@Override
+	public String toString() {
+		return "code=" + code + ", desc=" + desc + ", owner=" + owner;
+	}
+	
+	
 	
 }

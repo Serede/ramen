@@ -35,7 +35,7 @@ public class MessageRequestTest {
 	
 	@Test
 	public void getAccepted() {
-		assertFalse(r.isAccepted());
+		assertTrue(r.isAccepted());
 	} 
 	
 	@Test

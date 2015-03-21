@@ -39,15 +39,6 @@ public class UserDAOTest {
 	@Test
 	public void testGetUser() {
 		UserDAO a = UserDAO.getInstance();
-		try {
-			//DAO.create("./db/","./students.txt","./professors.txt");
-			DAO.init("./db/");
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		User u = a.getUser("maria.martin@ddm.es");
-		assertTrue(u.checkPassword("mamnds455"));
 	}
 
 	

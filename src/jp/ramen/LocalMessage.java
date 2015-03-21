@@ -26,7 +26,7 @@ public class LocalMessage {
 	
 	@Override 
 	public String toString() {
-		return "["+ read + "]" + reference;
+		return reference.toString();
 	} 
 	//TODO: Complete?
 }

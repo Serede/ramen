@@ -1,6 +1,8 @@
 package jp.ramen;
 
 import java.sql.*;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -236,5 +238,9 @@ public class GroupDAO { //TODO does not extend
 			if(stmt != null) stmt.close();
 			if(db != null) db.close();
 		}
+	}
+	
+	public Collection<Group> listGroups() {
+		return Collections.unmodifiableCollection(groups.values());
 	}
 }

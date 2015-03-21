@@ -12,7 +12,7 @@ public class Student extends User {
 
 	@Override
 	public boolean block(Entity e) {
-		if(e.getClass() == Sensei.class) return false;
+		if(e instanceof Sensei) return false;
 		return this.addToBlocked(e);
 	}
 
@@ -21,4 +21,8 @@ public class Student extends User {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		return "Student " + super.toString();
+	}
 }

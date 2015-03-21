@@ -11,5 +11,9 @@ public class StudyGroup extends Group {
 		super(name, desc, parent, creator);
 		if(creator instanceof Student) throw new ForbiddenAction();
 	}
-
+	
+	@Override
+	public String toString() {
+		return "StudyGroup "+super.toString();
+	}
 }

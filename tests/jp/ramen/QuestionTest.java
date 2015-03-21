@@ -4,6 +4,7 @@
 package jp.ramen;
 
 import static org.junit.Assert.*;
+import jp.ramen.exceptions.InvalidMessage;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -32,15 +33,16 @@ public class QuestionTest {
 
 	/**
 	 * Test method for {@link jp.ramen.Question#addAnswer(jp.ramen.Answer)}.
+	 * @throws InvalidMessage 
 	 */
 	@Test
-	public void testAddAnswer() {
+	public void testAddAnswer() throws InvalidMessage {
 		Answer a = new Answer("text", "text", u2, g, q);
 		assertTrue(q.whoAnswered().contains(u2));
 	}
 
 	@Test
-	public void testAddAnswerTwice() {
+	public void testAddAnswerTwice() throws InvalidMessage {
 		Answer a = new Answer("text", "text", u2, g, q);
 		q.addAnswer(a);
 		assertTrue(q.howManyAnswered()==1);
@@ -64,9 +66,10 @@ public class QuestionTest {
 
 	/**
 	 * Test method for {@link jp.ramen.Question#whoAnswered()}.
+	 * @throws InvalidMessage 
 	 */
 	@Test
-	public void testWhoAnswered() {
+	public void testWhoAnswered() throws InvalidMessage {
 		Answer a = new Answer("text", "text", u2, g, q);
 		assertTrue(q.whoAnswered().contains(u2));
 	}

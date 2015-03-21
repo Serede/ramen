@@ -20,4 +20,8 @@ public class Sensei extends User {
 		return false;
 	}
 
+	@Override
+	public String toString() {
+		return "Sensei " + super.toString();
+	}
 }

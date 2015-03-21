@@ -8,6 +8,8 @@ import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -224,5 +226,8 @@ public class UserDAO {
 			if(stmt != null) stmt.close();
 			if(db != null) db.close();
 		}
+	}
+	public Collection<User> listUsers() {
+		return Collections.unmodifiableCollection(users.values());
 	}
 }

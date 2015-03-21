@@ -6,7 +6,7 @@ public class RAMENTester {
 		RAMEN app = RAMEN.getInstance();
 		
 		System.out.println("Installing RAMEN...");
-		app.install("~/ramen", "students.txt", "professors.txt");
+		app.install("./ramen/db", "students.txt", "professors.txt");
 		System.out.println("Initialising...");
 		app.init();
 		

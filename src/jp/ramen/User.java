@@ -95,5 +95,9 @@ public abstract class User extends Entity {
 		return this.pass.equals(UserDAO.generateSHA(pass));
 	}
 	
+	@Override
+	public String toString() {
+		return this.getName();
+	}
 	
 }

@@ -20,7 +20,7 @@ public class JoinRequestTest {
 
 	@Test
 	public void getAccepted() {
-		assertFalse(r.isAccepted());
+		assertTrue(r.isAccepted());
 	} 
 	
 	@Test

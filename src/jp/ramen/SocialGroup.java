@@ -35,4 +35,8 @@ public class SocialGroup extends Group {
 		return mod;
 	}
 
+	@Override
+	public String toString() {
+		return "SocialGroup "+super.toString();
+	}
 }
