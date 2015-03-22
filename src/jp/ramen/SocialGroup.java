@@ -6,17 +6,36 @@ package jp.ramen;
 import jp.ramen.exceptions.*;
 
 /**
- * @author e303132
- *
+ * Implementation of social groups
+ * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
  */
 public class SocialGroup extends Group {
 	private boolean priv=false;
 	private boolean mod=false;
 	
+	/**
+	 * DB constructor
+	 * @param name
+	 * @param desc
+	 * @param priv
+	 * @param mod
+	 * @throws ForbiddenAction
+	 */
 	public SocialGroup(String name, String desc, boolean priv, boolean mod) throws ForbiddenAction{
 		this(name,desc,null,null,priv,mod);
 	}
 
+	/**
+	 * Constructor
+	 * @param name
+	 * @param desc
+	 * @param supg
+	 * @param owner
+	 * @param priv
+	 * @param mod
+	 * @throws ForbiddenAction
+	 */
 	public SocialGroup(String name, String desc, Group supg, User owner, boolean priv, boolean mod) throws ForbiddenAction {
 		super(name, desc, supg, owner);
 		

@@ -7,6 +7,11 @@ import java.sql.*;
 
 import jp.ramen.exceptions.InvalidMessage;
 
+/**
+ * Implementation of the messages function for the db
+ * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
+ */
 public class MessageDAO {
 	private final byte NONE_TYPE = 0;
 	private final byte JREQ_TYPE = 1;
@@ -17,21 +22,38 @@ public class MessageDAO {
 	private static MessageDAO mdb = null;
 	private Map<Long, Message> messages;
 
+	/**
+	 * Constructor (singleton)
+	 */
 	private MessageDAO() {
 		JOIN_TEXT = " wants to join "; // TODO from file
 		messages = new HashMap<>();
 	}
 
+	/**
+	 * 
+	 * @return the instance of the message db
+	 */
 	public static MessageDAO getInstance() {
 		if (mdb == null)
 			mdb = new MessageDAO();
 		return mdb;
 	}
 
+	/**
+	 * Searchs for a message with his ID
+	 * @param mid
+	 * @return the message if exists, null otherwise
+	 */
 	public Message getMessage(Long mid) {
 		return messages.get(mid);
 	}
 	
+	/**
+	 * 
+	 * @param m
+	 * @return the id of the message or 0
+	 */
 	public Long getID(Message m) {
 		for (Entry<Long,Message> e : messages.entrySet()) {
 			if (m.equals(e.getValue()))
@@ -40,6 +62,11 @@ public class MessageDAO {
 		return 0L; // TODO: Exception
 	}
 
+	/**
+	 * Load the data into memory
+	 * @throws SQLException
+	 * @throws InvalidMessage
+	 */
 	public void load() throws SQLException, InvalidMessage {
 		Connection db = null;
 		Statement stmt = null;
@@ -79,6 +106,12 @@ public class MessageDAO {
 		}
 	}
 	
+	/**
+	 * Sets the attributes of the messages
+	 * @param udb
+	 * @param gdb
+	 * @throws SQLException
+	 */
 	public void link(UserDAO udb, GroupDAO gdb) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
@@ -126,6 +159,12 @@ public class MessageDAO {
 		}
 	}
 	
+	/**
+	 * Adds a message to the db
+	 * @param msg
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 */
 	public boolean addMessage(Message msg) throws SQLException {
 			Connection db = null;
 			Statement stmt = null;
@@ -212,6 +251,12 @@ public class MessageDAO {
 			}
 	}
 
+	/**
+	 * Add a localMessage to the db
+	 * @param m
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 */
 	private boolean addLocalMessage(Message m) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
@@ -256,6 +301,13 @@ public class MessageDAO {
 		}		
 	}
 	
+	/**
+	 * Reads a message in the db
+	 * @param u
+	 * @param m
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 */
 	public boolean readLocalMessage(User u, Message m) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
@@ -279,6 +331,13 @@ public class MessageDAO {
 		}		
 	}
 	
+	/**
+	 * Delete a LocalMessage
+	 * @param u
+	 * @param m
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 */
 	public boolean delLocalMessage(User u, Message m) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
@@ -302,6 +361,13 @@ public class MessageDAO {
 		}		
 	}
 	
+	/**
+	 * Adds a message request
+	 * @param msg
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 * @throws InvalidMessage
+	 */
 	public boolean addMessageRequest(Message msg) throws SQLException, InvalidMessage {
 		Request req = new MessageRequest(msg.getSubject(), msg.getText(),
 				msg.getAuthor(), msg.getTo(), msg);
@@ -311,12 +377,26 @@ public class MessageDAO {
 		return true;
 	}
 
+	/**
+	 * Adds a join request
+	 * @param u
+	 * @param g
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 * @throws InvalidMessage
+	 */
 	public boolean addJoinRequest(User u, Group g) throws SQLException, InvalidMessage {
 		Request req = new JoinRequest(u.getName(), u.getName()
 				+ JOIN_TEXT + g.getCode(), u, g);
 		return addMessage(req);
 	}
 
+	/**
+	 * Accepts a message request
+	 * @param mr
+	 * @return
+	 * @throws SQLException
+	 */
 	public boolean acceptMessage(MessageRequest mr) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;

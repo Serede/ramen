@@ -33,10 +33,11 @@ public class RamenTesterApp {
 			
 			String action;
 			while(running) {
-				System.out.println("Enter an order (help for list of commands)");
-				action = console.readLine();
+				System.out.println("Enter an instruction (help for list of commands)");
+				System.out.print("> "); action = console.readLine();
 				System.out.println("Result of the action: " + handleCommand(action));
 			}
+			System.out.println("Closing the application");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -217,19 +218,22 @@ public class RamenTesterApp {
 		}
 	}
 	private static void displayHelp() {
-		System.out.println("You can type the following commands");
-		System.out.println("exit or Q");
-		System.out.println("create group <name> <desc> 'supg' <opts>");
-		System.out.println("send message <to> <\"subj\"> <\"text\"> ");
-		System.out.println("send question <to> <subj> <question>");
-		System.out.println("send answer <to> <\"subj\"> <\"answer\"> <question>");
-		System.out.println("join group <code>");
-		System.out.println("handle request <req> <answer>");
-		System.out.println("block <e>"); 
-		System.out.println("unblock <e>"); 
-		System.out.println("read <msg>"); 
-		System.out.println("list inbox");
-		System.out.println("list groups");
-		System.out.println("list users");
+		System.out.println("You can type the following commands:");
+		System.out.println("\t > exit or Q");
+		System.out.println("\t > create group <name> <desc> 'supg' <opts>");
+		System.out.println("\t > send message <to> <\"subj\"> <\"text\"> ");
+		System.out.println("\t > send question <to> <subj> <question>");
+		System.out.println("\t > send answer <to> <\"subj\"> <\"answer\"> <question>");
+		System.out.println("\t > join group <code>");
+		System.out.println("\t > handle request <req> <answer>");
+		System.out.println("\t > block <e>"); 
+		System.out.println("\t > unblock <e>"); 
+		System.out.println("\t > read <msg>"); 
+		System.out.println("\t > list inbox");
+		System.out.println("\t > list groups");
+		System.out.println("\t > list users");
+		System.out.println("To refer to users, use their name");
+		System.out.println("To refer to groups, use their code");
+		System.out.println("To refer to messages, use the index of the inbox");
 	}
 }

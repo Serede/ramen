@@ -6,24 +6,46 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Implementation of the DB functions related to groups
+ * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
+ */
 public class GroupDAO { //TODO does not extend
 	private static GroupDAO gdb = null;
 	private Map<Long, Group> groups;
 	
+	/**
+	 * Constructor(singleton)
+	 */
 	private GroupDAO() {
 		this.groups = new TreeMap<>();
 	}
 
+	/**
+	 * 
+	 * @return the instance of the GroupDAO
+	 */
 	public static GroupDAO getInstance() {
 		if (gdb == null)
 			gdb = new GroupDAO();
 		return gdb;
 	}
 	
+	/**
+	 * Searches for a group with his ID in the db
+	 * @param gid
+	 * @return the group if exists, null otherwise
+	 */
 	public Group getGroup(Long gid) {
 		return groups.get(gid);
 	}
 
+	/**
+	 * Searches for a group with his code in the db
+	 * @param code
+	 * @return the group if exists, null otherwise
+	 */
 	public Group getGroup(String code) {
 		for (Group g : groups.values()) {
 			if (code.equals(g.getCode()))
@@ -32,6 +54,11 @@ public class GroupDAO { //TODO does not extend
 		return null; // TODO: Exception
 	}
 	
+	/**
+	 * Gets the ID of a group
+	 * @param g
+	 * @return the ID if exists, 0 otherwise
+	 */
 	public Long getID(Group g) {
 		for (Map.Entry<Long,Group> e : groups.entrySet()) {
 			if (g.equals(e.getValue()))
@@ -40,6 +67,10 @@ public class GroupDAO { //TODO does not extend
 		return 0L; // TODO: Exception
 	}
 
+	/**
+	 * Loads the data into memory
+	 * @throws Exception
+	 */
 	public void load() throws Exception {
 		Connection db = null;
 		Statement stmt = null;
@@ -66,6 +97,12 @@ public class GroupDAO { //TODO does not extend
 		}
 	}
 	
+	/**
+	 * Sets the rest of attributes of every group
+	 * @param udb user db
+	 * @param mdb message db
+	 * @throws SQLException
+	 */
 	public void link(UserDAO udb, MessageDAO mdb) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
@@ -108,12 +145,21 @@ public class GroupDAO { //TODO does not extend
 		}
 	}
 	
+	/**
+	 * Updates the codes of all groups
+	 */
 	public void updateCodes() {
 		for (Group g : groups.values()) {
 			g.updateCode();
 		}
 	}
 	
+	/**
+	 * Add a group to the db
+	 * @param g
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 */
 	public boolean addGroup(Group g) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
@@ -180,6 +226,13 @@ public class GroupDAO { //TODO does not extend
 		}
 	}
 
+	/**
+	 * Adds a member to a group
+	 * @param g
+	 * @param u
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 */
 	public boolean addMember(Group g, User u) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
@@ -210,6 +263,13 @@ public class GroupDAO { //TODO does not extend
 		}
 	}
 	
+	/**
+	 * Deletes a member from a group
+	 * @param g
+	 * @param u
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 */
 	public boolean delMember(Group g, User u) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
@@ -240,6 +300,10 @@ public class GroupDAO { //TODO does not extend
 		}
 	}
 	
+	/**
+	 * 
+	 * @return a collection of all groups in the system
+	 */
 	public Collection<Group> listGroups() {
 		return Collections.unmodifiableCollection(groups.values());
 	}

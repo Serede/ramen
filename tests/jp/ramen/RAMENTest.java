@@ -109,7 +109,7 @@ public class RAMENTest {
 	 */
 	@Test
 	public void testGetCurrentUser() {
-		fail("Not yet implemented");
+		assertTrue(ramen.getCurrentUser()==null);
 	}
 
 }

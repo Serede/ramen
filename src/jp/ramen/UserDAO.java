@@ -13,25 +13,47 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
+/**
+ * Implementation of the functions related to users and the db
+ * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
+ */
 public class UserDAO {
 	public static long MAX_UID;
 	private static UserDAO udb = null;
 	private Map<Long, User> users;
 
+	/**
+	 * Constructor (singleton)
+	 */
 	private UserDAO() {
 		this.users = new TreeMap<>();
 	}
 
+	/**
+	 * 
+	 * @return the instance of the object
+	 */
 	public static UserDAO getInstance() {
 		if (udb == null)
 			udb = new UserDAO();
 		return udb;
 	}
 	
+	/**
+	 * Searches for an user with his/her id
+	 * @param uid
+	 * @return the user if exists, null otherwise
+	 */
 	public User getUser(Long uid) {
 		return users.get(uid);
 	}
 
+	/**
+	 * Searches for an user with his/her name
+	 * @param uid
+	 * @return the user if exists, null otherwise
+	 */
 	public User getUser(String name) {
 		for (User u : users.values()) {
 			if (u.getName().equals(name))
@@ -40,6 +62,11 @@ public class UserDAO {
 		return null; // TODO: Exception
 	}
 	
+	/**
+	 * 
+	 * @param u
+	 * @return the ID of an user of 0
+	 */
 	public Long getID(User u) {
 		for (Map.Entry<Long,User> e : users.entrySet()) {
 			if (u.equals(e.getValue()))
@@ -48,6 +75,11 @@ public class UserDAO {
 		return 0L; // TODO: Exception
 	}
 
+	/**
+	 * Generates the sha-1 of the string for the password
+	 * @param s
+	 * @return
+	 */
 	public static String generateSHA(String s) {
 		MessageDigest md;
 		try {
@@ -60,6 +92,12 @@ public class UserDAO {
 		}
 	}
 
+	/**
+	 * Populates the db
+	 * @param file
+	 * @param sensei
+	 * @throws Exception
+	 */
 	public void populate(String file, boolean sensei) throws Exception {
 		BufferedReader buf = null;
 		String line = null;
@@ -105,6 +143,10 @@ public class UserDAO {
 		}
 	}
 
+	/**
+	 * Loads the data into memory
+	 * @throws SQLException
+	 */
 	public void load() throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
@@ -132,6 +174,12 @@ public class UserDAO {
 		}
 	}
 	
+	/**
+	 * Set the attributes of the users
+	 * @param gdb
+	 * @param mdb
+	 * @throws SQLException
+	 */
 	public void link(GroupDAO gdb, MessageDAO mdb) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
@@ -170,6 +218,13 @@ public class UserDAO {
 		}
 	}
 	
+	/**
+	 * Add an entity to blocked in db
+	 * @param u
+	 * @param blck
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 */
 	public boolean addBlock(User u, Entity blck) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
@@ -199,6 +254,13 @@ public class UserDAO {
 		}
 	}
 	
+	/**
+	 * Removes an entity from the blocked list
+	 * @param u
+	 * @param blck
+	 * @return
+	 * @throws SQLException
+	 */
 	public boolean delBlock(User u, Entity blck) throws SQLException {
 		Connection db = null;
 		Statement stmt = null;
@@ -227,6 +289,11 @@ public class UserDAO {
 			if(db != null) db.close();
 		}
 	}
+	
+	/**
+	 * 
+	 * @return the list of users
+	 */
 	public Collection<User> listUsers() {
 		return Collections.unmodifiableCollection(users.values());
 	}

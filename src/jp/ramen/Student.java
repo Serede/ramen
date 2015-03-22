@@ -1,11 +1,27 @@
 package jp.ramen;
 
+/**
+ * The class student
+ * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
+ */
 public class Student extends User {
 
+	/**
+	 * Constructor
+	 * @param name
+	 * @param pass
+	 */
 	public Student(String name, String pass) {
 		super(name, pass);
 	}
 
+	/**
+	 * Constructor with sha-1 switch option
+	 * @param name
+	 * @param pass
+	 * @param sha
+	 */
 	public Student(String name, String pass, boolean sha) {
 		super(name,pass,sha);
 	}

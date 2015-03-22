@@ -5,6 +5,11 @@ import java.sql.*;
 
 import jp.ramen.exceptions.*;
 
+/**
+ * This module implements the main communication with the H2 database
+ * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
+ */
 public class DAO {
 	private final static String DB_NAME = "ramen";
 	private final static String DB_INIT = "runscript from 'init.sql'";
@@ -17,34 +22,65 @@ public class DAO {
 	private static GroupDAO gdb = null;
 	private static MessageDAO mdb = null;
 
+	/**
+	 * Constructor (singleton)
+	 */
 	private DAO() {
 		udb = UserDAO.getInstance();
 		gdb = GroupDAO.getInstance();
 		mdb = MessageDAO.getInstance();
 	}
 	
+	/**
+	 * 
+	 * @return the instance of the DAO
+	 */
 	public static DAO getInstance() {
 		if(ddb == null)
 			ddb = new DAO();
 		return ddb;
 	}
 	
+	/**
+	 * 
+	 * @return the instance of the user db
+	 */
 	public UserDAO getUdb() {
 		return udb;
 	}
 
+	/**
+	 * 
+	 * @return the instance of the group db
+	 */
 	public GroupDAO getGdb() {
 		return gdb;
 	}
 
+	/**
+	 * 
+	 * @return the instance of the message db
+	 */
 	public MessageDAO getMdb() {
 		return mdb;
 	}
 
+	/**
+	 * Connects to the database
+	 * @return the connection
+	 * @throws SQLException
+	 */
 	public Connection connect() throws SQLException {
 		return DriverManager.getConnection(DB_URL, DB_USER, DB_PASS);
 	}
 
+	/**
+	 * Creates the database
+	 * @param db the path to the db
+	 * @param st the path to the students file
+	 * @param pr the path to the professors file
+	 * @throws Exception
+	 */
 	public void create(String db, String st, String pr) throws Exception {
 		Connection c = null;
 		PrintWriter pw = null;
@@ -70,6 +106,10 @@ public class DAO {
 		}
 	}
 
+	/**
+	 * Loads the db into memory
+	 * @throws Exception
+	 */
 	public void init() throws Exception {
 		Connection c = null;
 		BufferedReader buf = null;
