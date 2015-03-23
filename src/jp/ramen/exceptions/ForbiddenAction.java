@@ -1,8 +1,9 @@
 package jp.ramen.exceptions;
 
 public class ForbiddenAction extends RAMENException {
-	private static final String text="You are not allowed to do that.";
-	public ForbiddenAction() {
-		super(text);
+	private static final long serialVersionUID = 3433634798868336264L;
+	private static final String text="Forbidden action:";
+	public ForbiddenAction(String fault) {
+		super(text + "\n\t" + fault);
 	}
 }

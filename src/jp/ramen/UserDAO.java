@@ -129,11 +129,6 @@ public class UserDAO {
 					}
 				}
 			}
-			
-			stmt = db.createStatement();
-			ResultSet rs = stmt.executeQuery("SELECT MAX(UID) FROM USERS");
-			if(rs.next())
-				MAX_UID = rs.getLong(1);
 		} catch (Exception e) { // TODO: ex
 			throw e;
 		} finally {
@@ -165,6 +160,12 @@ public class UserDAO {
 					u = new Student(rs.getString(3), rs.getString(4));
 				users.put(rs.getLong(1), u);
 			}
+			
+			stmt.close();
+			stmt = db.createStatement();
+			rs = stmt.executeQuery("SELECT MAX(UID) FROM USERS");
+			if(rs.next())
+				MAX_UID = rs.getLong(1);
 			
 		} catch (SQLException e) {
 			throw e;
@@ -243,9 +244,10 @@ public class UserDAO {
 							udb.getID((User) blck) :
 									gdb.getID((Group) blck))
 					+ ")";
+			if(u.block(blck)==false) return false;
 			stmt.executeUpdate(insert_block);
 			
-			return u.block(blck);
+			return true;
 		} catch (SQLException e) {
 			throw e;
 		} finally {
@@ -274,11 +276,10 @@ public class UserDAO {
 			stmt = db.createStatement();
 			String delete_block = "DELETE FROM U_BLOCK WHERE "
 					+ "`UID`=" + udb.getID(u)
-					+ "AND"
+					+ " AND "
 					+ "BLCK=" + ((blck instanceof User) ?
 							udb.getID((User) blck) :
-									gdb.getID((Group) blck))
-					+ ")";
+									gdb.getID((Group) blck));
 			stmt.executeUpdate(delete_block);
 
 			return u.unblock(blck);

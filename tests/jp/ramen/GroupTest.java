@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class GroupTest {
+	@SuppressWarnings("unused")
 	private Group g1, g2, g11, g111;
 	private User u1, u2;
 	
@@ -27,7 +28,6 @@ public class GroupTest {
 	@Test
 	public void testAddMember() {
 		g1.addMember(u2);
-		System.out.println(g1.getMembers());
 		assertTrue(g1.getMembers().contains(u1) && g1.getMembers().contains(u2));
 		
 	}

@@ -33,7 +33,6 @@ public class LocalMessageTest {
 	 */
 	@Test
 	public void testGetReference() {
-		System.out.println(u1.getInbox());
 		assertTrue(u2.getInbox().get(0).getReference()==m1);
 	}
 

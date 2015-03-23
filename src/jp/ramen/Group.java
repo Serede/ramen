@@ -187,7 +187,7 @@ public abstract class Group extends Entity {
 
 	@Override
 	public String toString() {
-		return "code=" + code + ", desc=" + desc + ", owner=" + owner;
+		return "code=" + code + ", desc=" + desc + ", supg=" + supergroup + ", owner=" + owner;
 	}
 	
 	

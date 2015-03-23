@@ -3,7 +3,7 @@ package jp.ramen.exceptions;
 public abstract class RAMENException extends Exception {
 	private static final long serialVersionUID = 1L;
 	private String text;
-	private static final String DEFAULT_TEXT = "Unknown error";
+	private static final String DEFAULT_TEXT = "Generic error.";
 	
 	public RAMENException(String text) {
 		this.text = text;

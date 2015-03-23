@@ -5,7 +5,15 @@ package jp.ramen;
 
 import static org.junit.Assert.*;
 
-import org.junit.Before;
+import java.io.File;
+import java.sql.SQLException;
+
+import jp.ramen.exceptions.ForbiddenAction;
+import jp.ramen.exceptions.GroupAlreadyExists;
+import jp.ramen.exceptions.InvalidMessage;
+
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -13,103 +21,315 @@ import org.junit.Test;
  * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
  */
 public class RAMENTest {
-	private RAMEN ramen;
-	private User u;
+	private static RAMEN ramen;
 	/**
 	 * @throws java.lang.Exception
 	 */
-	@Before
-	public void setUp() throws Exception {
+	@BeforeClass
+	public static void setUp() throws Exception {
+		File f = new File("./db_test/ramen.mv.db");
+		if(f.isFile()) f.delete();
+		File g = new File("./path.lck");
+		File gtemp = new File("./path.lck.tmp");
+		if(g.isFile()) g.renameTo(gtemp);
 		ramen = RAMEN.getInstance();
-		
+		ramen.install("./db_test", "students.txt", "professors.txt");
+		ramen.init();
 	}
 
-	/**
-	 * Test method for {@link jp.ramen.RAMEN#init(java.lang.String)}.
-	 */
-	@Test
-	public void testInit() {
-		fail("Not yet implemented");
+	
+	@AfterClass
+	public static void tearDownAfterClass() throws Exception {
+		File f = new File("./db_test/ramen.mv.db");
+		if(f.isFile()) f.delete();
+		File g = new File("./path.lck");
+		File gtemp = new File("./path.lck.tmp");
+		if(g.isFile()) g.delete();
+		if(gtemp.isFile()) gtemp.renameTo(g);
 	}
 
+	
+	
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#sendMessage(jp.ramen.Entity, java.lang.String, java.lang.String, boolean)}.
+	 * @throws SQLException 
+	 * @throws InvalidMessage 
+	 * @throws ForbiddenAction 
 	 */
 	@Test
-	public void testSendMessage() {
-		fail("Not yet implemented");
+	public void testSendMessageUser() throws ForbiddenAction, InvalidMessage, SQLException {
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		assertTrue(ramen.sendMessage(ramen.getDAO().getUdb().getUser("leonardo.martin@mail.gob"), "test", "test", false));
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertTrue(ramen.getCurrentUser().getInbox().size()==1);
 	}
 
+	@Test(expected=ForbiddenAction.class)
+	public void testSendQuestionUser() throws ForbiddenAction, InvalidMessage, SQLException {
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		assertFalse(ramen.sendMessage(ramen.getDAO().getUdb().getUser("leonardo.martin@mail.gob"), "test", "test", true));
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertTrue(ramen.getCurrentUser().getInbox().size()==1);
+	}
+	
+	@Test(expected=ForbiddenAction.class)
+	public void testSendQuestionStudyNoOwner() throws ForbiddenAction, InvalidMessage, SQLException, GroupAlreadyExists {
+		ramen.login("oscar.casals@mail.gob", "orcsmb457");
+		ramen.createGroup("studygroupofOscar", "desc", null, false, false, false);
+		ramen.login("elvis.domingo@mail.gob", "esdomb467");
+		ramen.joinGroup(ramen.getDAO().getGdb().getGroup("studygroupofoscar"));
+		assertFalse(ramen.sendMessage(ramen.getDAO().getGdb().getGroup("studygroupofoscar"), "question", "text", true));
+	}
+	
+	
+	
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#login(java.lang.String, java.lang.String)}.
 	 */
 	@Test
-	public void testLogin() {
-		fail("Not yet implemented");
+	public void testLoginNoUser() {
+		assertFalse(ramen.login("iamnotanuser", "thisisnotapassword"));
 	}
 
+	@Test
+	public void testLoginWrongPass() {
+		assertFalse(ramen.login("maria.martin@ddm.es", "thisisnotapassword"));
+	}
+	
+	@Test
+	public void testLogin() {
+		assertTrue(ramen.login("maria.martin@ddm.es", "mamnds455"));
+	}
+	
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#createGroup()}.
+	 * @throws SQLException 
+	 * @throws ForbiddenAction 
 	 */
-	@Test
-	public void testCreateGroup() {
-		fail("Not yet implemented");
-	}
 
+	@Test
+	public void testCreateGroupStudySensei() throws ForbiddenAction, SQLException, GroupAlreadyExists {
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertTrue(ramen.createGroup("group1", "desc", null, false, false, false));
+	}
+	
+	@Test(expected=ForbiddenAction.class)
+	public void testCreateGroupStudyStudent() throws ForbiddenAction, SQLException, GroupAlreadyExists{
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		assertFalse(ramen.createGroup("group11", "desc", null, false, false, false));
+	}
+	
+	@Test
+	public void testCreateGroupSocialStudent() throws ForbiddenAction, SQLException, GroupAlreadyExists{
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		assertTrue(ramen.createGroup("group111", "desc", null, true, false, false));
+	}
+	
+	@Test(expected=ForbiddenAction.class)
+	public void testCreateGroupSocialSensei() throws ForbiddenAction, SQLException, GroupAlreadyExists {
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertFalse(ramen.createGroup("group1111", "desc", null, true, false, false));
+	}
+	
+	@Test(expected=GroupAlreadyExists.class)
+	public void testCreateGroupTwice() throws ForbiddenAction, SQLException, GroupAlreadyExists {
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		ramen.createGroup("group11111", "desc", null, false, false, false);
+		assertTrue(ramen.createGroup("group11111", "desc", null, false, false, false));
+	}
+	
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#joinGroup(jp.ramen.Group)}.
+	 * @throws SQLException 
+	 * @throws GroupAlreadyExists 
+	 * @throws ForbiddenAction 
+	 * @throws InvalidMessage 
 	 */
 	@Test
-	public void testJoinGroup() {
-		fail("Not yet implemented");
+	public void testJoinGroupStudentsjoinsStudy() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		ramen.createGroup("group3", "desc", null, false, false, false);
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		assertTrue(ramen.joinGroup(ramen.getDAO().getGdb().getGroup("group3")));
 	}
 
+	@Test
+	public void testJoinGroupStudentsjoinsSocial() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		ramen.createGroup("group33", "desc", null, true, false, false);
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertTrue(ramen.joinGroup(ramen.getDAO().getGdb().getGroup("group33")));
+	}
+	
+	@Test
+	public void testJoinGroupThrowingRequest() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		ramen.createGroup("sgpm", "desc", null, true, true, true);
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertTrue(ramen.joinGroup(ramen.getDAO().getGdb().getGroup("sgpm")));
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		assertTrue(ramen.getCurrentUser().getInbox().size()==1);
+	}
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#sendAnswer(jp.ramen.Entity, java.lang.String, java.lang.String, jp.ramen.Question)}.
+	 * @throws SQLException 
+	 * @throws InvalidMessage 
+	 * @throws ForbiddenAction 
 	 */
-	@Test
-	public void testSendAnswer() {
-		fail("Not yet implemented");
+	@Test(expected=ForbiddenAction.class)
+	public void testSendAnswerSensei() throws ForbiddenAction, InvalidMessage, SQLException {
+		ramen.login("oscar.casals@mail.gob", "orcsmb457");
+		ramen.sendMessage(ramen.getDAO().getGdb().getGroup("studygroupofoscar"), "The real question", "What do you think about CIREL?", true);
+		ramen.login("elvis.domingo@mail.gob", "esdomb467");
+		ramen.sendAnswer(ramen.getDAO().getGdb().getGroup("studygroupofoscar"), "I will fail", "fail?", (Question) ramen.getCurrentUser().getInbox().get(0).getReference());
 	}
-
+	@Test
+	public void testSendAnswerStudent() throws ForbiddenAction, InvalidMessage, SQLException, GroupAlreadyExists {
+		ramen.login("oscar.casals@mail.gob", "orcsmb457");
+		ramen.createGroup("studygroupofoscar2", "studygroupofoscar2", null, false, false, false);
+		ramen.login("almudena.alonso@alca.es", "aaaoas756");
+		ramen.joinGroup(ramen.getDAO().getGdb().getGroup("studygroupofoscar2"));
+		ramen.login("oscar.casals@mail.gob", "orcsmb457");
+		ramen.sendMessage(ramen.getDAO().getGdb().getGroup("studygroupofoscar2"), "The real question 2", "What do you think about SOPER?", true);
+		ramen.login("almudena.alonso@alca.es", "aaaoas756");
+		assertTrue(ramen.sendAnswer(ramen.getDAO().getGdb().getGroup("studygroupofoscar2"), "I will fail", "fail?", (Question) ramen.getCurrentUser().getInbox().get(0).getReference()));
+	}
+	@Test
+	public void testSendAnswerTwice() {
+		fail("Not yet implemented"); //TODO: can you answer twice?
+	}
+	
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#handleMessageRequest(jp.ramen.MessageRequest, boolean)}.
 	 */
 	@Test
-	public void testHandleMessageRequest() {
+	public void testHandleMessageRequestTrue() {
 		fail("Not yet implemented");
 	}
 
+	
+	@Test
+	public void testHandleMessageRequestFalse() {
+		fail("Not yet implemented");
+	}
+	
+	@Test
+	public void testHandleMessageRequestTwice() {
+		fail("Not yet implemented");
+	}
+	
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#handleJoinRequest(jp.ramen.JoinRequest, boolean)}.
 	 */
 	@Test
-	public void testHandleJoinRequest() {
+	public void testHandleJoinRequestTrue() {
 		fail("Not yet implemented");
 	}
 
+	@Test
+	public void testHandleJoinRequestFalse() {
+		fail("Not yet implemented");
+	}
+
+	@Test
+	public void testHandleJoinRequestTwice() {
+		fail("Not yet implemented");
+	}
+
+	
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#block(jp.ramen.Entity)}.
+	 * @throws SQLException 
 	 */
 	@Test
-	public void testBlock() {
-		fail("Not yet implemented");
+	public void testBlockStudentBlocksSensei() throws SQLException {
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		assertFalse(ramen.block(ramen.getDAO().getUdb().getUser("leonardo.martin@mail.gob")));
+		assertFalse(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getUdb().getUser("leonardo.martin@mail.gob")));
+	}
+	
+	@Test
+	public void testBlockStudentBlocksStudent() throws SQLException {
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		assertTrue(ramen.block(ramen.getDAO().getUdb().getUser("luis.martin@etp.com")));
+		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getUdb().getUser("luis.martin@etp.com")));
+	}
+
+	@Test
+	public void testBlockSenseiBlocksSensei() throws SQLException {
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertTrue(ramen.block(ramen.getDAO().getUdb().getUser("fernando.lopez@mail.gob")));
+		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getUdb().getUser("fernando.lopez@mail.gob")));
+	}
+	
+	@Test
+	public void testBlockSenseiBlocksStudent() throws SQLException {
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertTrue(ramen.block(ramen.getDAO().getUdb().getUser("luis.martin@etp.com")));
+	}
+
+	@Test
+	public void testBlockSenseiBlocksGroup() throws SQLException, ForbiddenAction, GroupAlreadyExists {
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		ramen.createGroup("group2", "desc", null, true, false, false);
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertTrue(ramen.block(ramen.getDAO().getGdb().getGroup("group2")));
+		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getGdb().getGroup("group2")));
+	}
+	
+	@Test
+	public void testBlockStudentBlocksGroup() throws SQLException, ForbiddenAction, GroupAlreadyExists {
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		ramen.createGroup("group22", "desc", null, false, false, false);
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		assertTrue(ramen.block(ramen.getDAO().getGdb().getGroup("group22")));
+		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getGdb().getGroup("group22")));
+	}
+	
+	@Test
+	public void testBlockWithSubgroups() throws SQLException, ForbiddenAction, GroupAlreadyExists {
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		ramen.createGroup("group221", "desc", null, false, false, false);
+		ramen.createGroup("group2211", "desc", ramen.getDAO().getGdb().getGroup("group221"), false, false, false);
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		assertTrue(ramen.block(ramen.getDAO().getGdb().getGroup("group221")));
+		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getGdb().getGroup("group221")));
+		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getGdb().getGroup("group221.group2211")));
+	}
+	/**
+	 * Test method for {@link jp.ramen.RAMEN#unblock(jp.ramen.Entity)}.
+	 * @throws SQLException 
+	 */
+	@Test
+	public void testUnblockAnUser() throws SQLException {
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertTrue(ramen.block(ramen.getDAO().getUdb().getUser("luis.martin@etp.com")));
+		assertTrue(ramen.unblock(ramen.getDAO().getUdb().getUser("luis.martin@etp.com")));
 	}
 
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#unblock(jp.ramen.Entity)}.
+	 * @throws SQLException 
+	 * @throws GroupAlreadyExists 
+	 * @throws ForbiddenAction 
 	 */
 	@Test
-	public void testUnblock() {
-		fail("Not yet implemented");
+	public void testUnblockAGroup() throws SQLException, ForbiddenAction, GroupAlreadyExists {
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		ramen.createGroup("group5", "desc", null, true, false, false);
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertTrue(ramen.block(ramen.getDAO().getGdb().getGroup("group5")));
+		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getGdb().getGroup("group5")));
+		assertTrue(ramen.unblock(ramen.getDAO().getGdb().getGroup("group5")));
 	}
-
+	
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#getCurrentUser()}.
 	 */
 	@Test
 	public void testGetCurrentUser() {
-		assertTrue(ramen.getCurrentUser()==null);
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertTrue(ramen.getCurrentUser().equals(ramen.getDAO().getUdb().getUser("leonardo.martin@mail.gob")));
 	}
 
 }

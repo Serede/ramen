@@ -39,7 +39,7 @@ public class SocialGroup extends Group {
 	public SocialGroup(String name, String desc, Group supg, User owner, boolean priv, boolean mod) throws ForbiddenAction {
 		super(name, desc, supg, owner);
 		
-		if(owner instanceof Sensei) throw new ForbiddenAction();
+		if(owner instanceof Sensei) throw new ForbiddenAction("A sensei can only create study groups.");
 		this.priv = supg==null? priv:supg.isPrivate(); //TODO: inheritance
 		this.mod = supg==null? mod:supg.isModerated();
 	}

@@ -130,6 +130,18 @@ public abstract class User extends Entity {
 	}
 	
 	/**
+	 * Deletes from inbox given the message
+	 * @param lm
+	 * @return true if it was possible, false otherwise
+	 */
+	public boolean delFromInbox(LocalMessage lm) {
+		if(!inbox.contains(lm)) return false;
+
+		inbox.remove(lm);
+		return true;
+	}
+	
+	/**
 	 * 
 	 * @return if the user can answer a question
 	 */
@@ -150,6 +162,10 @@ public abstract class User extends Entity {
 	 */
 	public boolean checkPassword(String pass) {
 		return this.pass.equals(UserDAO.generateSHA(pass));
+	}
+	
+	public List<Entity> getBlocked() {
+		return Collections.unmodifiableList(blocked);
 	}
 	
 	@Override

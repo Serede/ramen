@@ -68,22 +68,54 @@ public class RAMEN {
 	 * @param username
 	 * @param password
 	 * @return true if it was possible, false otherwise
-	 * @throws InvalidLogin
 	 */
-	public boolean login(String username, String password) throws InvalidLogin {
+	public boolean login(String username, String password) {
 		UserDAO udb = ddb.getUdb();
 		
 		User u = udb.getUser(username);
-		if(u==null) throw new InvalidLogin();
+		if(u==null) return false;
 		if(u.checkPassword(password)==true) {
 			currentUser = u;
 			return true;
 		}
-		else {
+		else
 			return false;
-		}
+	}
+
+	/**
+	 * 
+	 * @return the inbox of the user
+	 */
+	public List<LocalMessage> listInbox() {
+		return currentUser.getInbox();
+	}
+
+	/**
+	 * Reads a localMessage
+	 * @param lm
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 */
+	public boolean readMessage(LocalMessage lm) throws SQLException {
+		MessageDAO mdb = ddb.getMdb();
+		
+		mdb.readLocalMessage(currentUser, lm.getReference());
+		return lm.read();
 	}
 	
+	/**
+	 * Delete a localMessage
+	 * @param lm
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 */
+	public boolean delMessage(LocalMessage lm) throws SQLException {
+		MessageDAO mdb = ddb.getMdb();
+		
+		mdb.delLocalMessage(currentUser, lm.getReference());
+		return currentUser.delFromInbox(lm);
+	}
+
 	/**
 	 * Sends a message
 	 * @param to
@@ -119,76 +151,17 @@ public class RAMEN {
 					else if (question && ((Group) target).getOwner().equals(currentUser)) 
 						return mdb.addMessage(msg);
 					else
-						throw new ForbiddenAction();
+						throw new ForbiddenAction("Only group owners can post questions.");
 				} else
-					throw new ForbiddenAction();
+					throw new ForbiddenAction("Only a sensei can post in a study group");
 			} else
-				throw new ForbiddenAction();
-		} else if (target instanceof User) { //????
+				throw new ForbiddenAction("Social groups do not allow questions.");
+		} else if (target instanceof User && !question) { //????
 			return mdb.addMessage(msg);
 		} else
-			throw new ForbiddenAction();
+			throw new ForbiddenAction("Only group members can send messages.");
 	}
-	
-	/**
-	 * Reads a localMessage
-	 * @param lm
-	 * @return true if it was possible, false otherwise
-	 * @throws SQLException
-	 */
-	public boolean readMessage(LocalMessage lm) throws SQLException {
-		MessageDAO mdb = ddb.getMdb();
-		
-		mdb.readLocalMessage(currentUser, lm.getReference());
-		return lm.read();
-	}
-	
-	/**
-	 * Creates a group
-	 * @param name
-	 * @param desc
-	 * @param supg
-	 * @param social
-	 * @param priv
-	 * @param mod
-	 * @return true if it was possible, false otherwise
-	 * @throws SQLException
-	 * @throws ForbiddenAction
-	 */
-	public boolean createGroup(String name, String desc, Group supg, boolean social, boolean priv, boolean mod) throws SQLException, ForbiddenAction {
-		Group g = null;
-		GroupDAO gdb = ddb.getGdb();
-		
-		if(social && supg==null || supg instanceof SocialGroup) 
-			//check if the owner is the same in the supg
-			g = new SocialGroup(name, desc, supg, currentUser, priv, mod);
-		else
-			g = new StudyGroup(name, desc, supg, currentUser);
-		
-		gdb.addGroup(g);
-		
-		return true;
-	}
-	
-	/**
-	 * Joins a group
-	 * @param g
-	 * @return true if it was possible, false otherwise
-	 * @throws SQLException
-	 * @throws InvalidMessage
-	 */
-	public boolean joinGroup(Group g) throws SQLException, InvalidMessage  {
-		GroupDAO gdb = ddb.getGdb();
-		MessageDAO mdb = ddb.getMdb();
-		
-		if(g.isPrivate()) {
-			return mdb.addJoinRequest(currentUser, g);
-		}
-		else {
-			return gdb.addMember(g, currentUser);
-		}
-	}
-	
+
 	/**
 	 * Sends a answer to the question
 	 * @param to
@@ -201,15 +174,28 @@ public class RAMEN {
 	 * @throws ForbiddenAction
 	 */
 	public boolean sendAnswer(Entity to, String subject, String text, Question q) throws SQLException, InvalidMessage, ForbiddenAction {
-		Message msg = new Answer(subject, text, currentUser, to, q);
 		if (currentUser.canAnswer()
 				&& ((Group) to).getMembers().contains(currentUser)) {
 			MessageDAO mdb = ddb.getMdb();
+			Message msg = new Answer(subject, text, currentUser, to, q);
 			return mdb.addMessage(msg);
-		}
-		throw new ForbiddenAction();
+		} else
+			throw new ForbiddenAction("You can not answer that!");
 	}
 	
+	/**
+	 * Reviews answers of a question
+	 * @param q
+	 * @return
+	 * @throws ForbiddenAction
+	 */
+	public List<Answer> reviewQuestion(Question q) throws ForbiddenAction {
+		if(currentUser.equals(q.getAuthor()))
+			return q.reviewAnswers();
+		else
+			throw new ForbiddenAction("Only question author can review its answers.");
+	}
+
 	/**
 	 * Handles the request
 	 * @param r
@@ -220,7 +206,7 @@ public class RAMEN {
 	public boolean handleRequest(Request r, boolean accepted) throws SQLException {
 		MessageDAO mdb = ddb.getMdb();
 		GroupDAO gdb = ddb.getGdb();
-
+	
 		if(accepted) {
 			if(r instanceof MessageRequest) { //r.requestingMessage()
 				mdb.acceptMessage((MessageRequest) r);
@@ -236,7 +222,95 @@ public class RAMEN {
 		}
 		return true;
 	}
+
+	/**
+	 * 
+	 * @return the list of groups
+	 */
+	public Collection<Group> listGroups() {
+		return ddb.getGdb().listGroups();
+	}
+
+	/**
+	 * Joins a group
+	 * @param g
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 * @throws InvalidMessage
+	 */
+	public boolean joinGroup(Group g) throws SQLException, InvalidMessage  {
+		GroupDAO gdb = ddb.getGdb();
+		MessageDAO mdb = ddb.getMdb();
+		
+		for(Group sg : g.getSubgroups())
+			if(joinGroup(sg)==false) return false;
+		
+		if(g.isPrivate())
+			return mdb.addJoinRequest(currentUser, g);
+		else
+			return gdb.addMember(g, currentUser);
+	}
 	
+	/**
+	 * Leaves a group
+	 * @param g
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 * @throws ForbiddenAction 
+	 */
+	public boolean leaveGroup(Group g) throws SQLException, ForbiddenAction {
+		GroupDAO gdb = ddb.getGdb();
+	
+		if(currentUser.equals(g.getOwner()))
+			throw new ForbiddenAction("You are not allowed to leave groups you own.");
+		else
+			return gdb.delMember(g, currentUser);
+	}
+
+	/**
+	 * Creates a group
+	 * @param name
+	 * @param desc
+	 * @param supg
+	 * @param social
+	 * @param priv
+	 * @param mod
+	 * @return true if it was possible, false otherwise
+	 * @throws SQLException
+	 * @throws ForbiddenAction
+	 * @throws GroupAlreadyExists 
+	 */
+	public boolean createGroup(String name, String desc, Group supg, boolean social, boolean priv, boolean mod) throws SQLException, ForbiddenAction, GroupAlreadyExists {
+		Group g = null;
+		GroupDAO gdb = ddb.getGdb();
+		
+		if(supg==null || currentUser.equals(supg.getOwner())) {
+			String code = (supg==null?"":supg.getCode()+".")+name.toLowerCase().replace(" ", "_");
+			if(gdb.getGroup(code) != null)
+				throw new GroupAlreadyExists(code);
+			if(social && (supg==null || supg instanceof SocialGroup))
+				g = new SocialGroup(name, desc, supg, currentUser, priv, mod);
+			else if(!social && (supg==null || supg instanceof StudyGroup))
+				g = new StudyGroup(name, desc, supg, currentUser);
+			else
+				throw new ForbiddenAction("Invalid group settings.");
+		}
+		else
+			throw new ForbiddenAction("You must own the supergroup to create subgroups.");
+		
+		gdb.addGroup(g);
+		
+		return true;
+	}
+	
+	/**
+	 * 
+	 * @return the list of users
+	 */
+	public Collection<User> listUsers() {
+		return ddb.getUdb().listUsers();
+	}
+
 	/**
 	 * Blocks an entity
 	 * @param e
@@ -245,6 +319,10 @@ public class RAMEN {
 	 */
 	public boolean block(Entity e) throws SQLException {
 		UserDAO udb = ddb.getUdb();
+		if(e instanceof Group) {
+			for(Group g : ((Group) e).getSubgroups())
+				if(block(g)==false) return false;
+		}
 		return udb.addBlock(currentUser, e);
 	}
 	
@@ -265,29 +343,5 @@ public class RAMEN {
 	 */
 	public User getCurrentUser() {
 		return currentUser;
-	}
-	
-	/**
-	 * 
-	 * @return the list of users
-	 */
-	public Collection<User> listUsers() {
-		return ddb.getUdb().listUsers();
-	}
-	
-	/**
-	 * 
-	 * @return the list of groups
-	 */
-	public Collection<Group> listGroups() {
-		return ddb.getGdb().listGroups();
-	}
-	
-	/**
-	 * 
-	 * @return the inbox of the user
-	 */
-	public List<LocalMessage> getInbox() {
-		return currentUser.getInbox();
 	}
 }

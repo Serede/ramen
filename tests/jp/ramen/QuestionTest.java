@@ -37,6 +37,7 @@ public class QuestionTest {
 	 */
 	@Test
 	public void testAddAnswer() throws InvalidMessage {
+		@SuppressWarnings("unused")
 		Answer a = new Answer("text", "text", u2, g, q);
 		assertTrue(q.whoAnswered().contains(u2));
 	}
@@ -70,6 +71,7 @@ public class QuestionTest {
 	 */
 	@Test
 	public void testWhoAnswered() throws InvalidMessage {
+		@SuppressWarnings("unused")
 		Answer a = new Answer("text", "text", u2, g, q);
 		assertTrue(q.whoAnswered().contains(u2));
 	}

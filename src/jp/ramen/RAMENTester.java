@@ -33,6 +33,7 @@ public class RAMENTester {
 		app.login("maria.martin@ddm.es", "mamnds455");
 		System.out.println(app.getCurrentUser().getInbox());
 		app.handleRequest((Request) app.getCurrentUser().getInbox().get(0).getReference(), true);
+		app.handleRequest((Request) app.getCurrentUser().getInbox().get(1).getReference(), true);
 		System.out.println(app.getCurrentUser().getInbox());
 		System.out.println("Posting to anime back as Leo...");
 		app.login("leo.dominguez@alla.net", "lodzat287");
