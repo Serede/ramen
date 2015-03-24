@@ -17,6 +17,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
+ * Main test of the API. The tests are more precise because it is necessary to ensure the correct behaviour of the API.
+ * Some tests depends one on the other, so all must be executed together
  * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
  * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
  */
@@ -170,6 +172,17 @@ public class RAMENTest {
 		ramen.login("maria.martin@ddm.es", "mamnds455");
 		assertTrue(ramen.getCurrentUser().getInbox().size()==1);
 	}
+	
+	@Test
+	public void testJoinGroupStudentsGroupsAndSubgroups() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
+		ramen.login("maria.martin@ddm.es", "mamnds455");
+		ramen.createGroup("group333", "desc", null, true, false, false);
+		ramen.createGroup("group3333", "desc", ramen.getDAO().getGdb().getGroup("group333"), true, false, false);
+		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
+		assertTrue(ramen.joinGroup(ramen.getDAO().getGdb().getGroup("group333")));
+		assertTrue(ramen.getDAO().getGdb().getGroup("group333.group3333").getMembers().size()==2);
+	}
+	
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#sendAnswer(jp.ramen.Entity, java.lang.String, java.lang.String, jp.ramen.Question)}.
 	 * @throws SQLException 
@@ -194,46 +207,112 @@ public class RAMENTest {
 		ramen.login("almudena.alonso@alca.es", "aaaoas756");
 		assertTrue(ramen.sendAnswer(ramen.getDAO().getGdb().getGroup("studygroupofoscar2"), "I will fail", "fail?", (Question) ramen.getCurrentUser().getInbox().get(0).getReference()));
 	}
-	@Test
-	public void testSendAnswerTwice() {
-		fail("Not yet implemented"); //TODO: can you answer twice?
-	}
+	//TODO: can you answer twice? @Test
+	//public void testSendAnswerTwice() {
+	//	fail("Not yet implemented"); 
+	//}
 	
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#handleMessageRequest(jp.ramen.MessageRequest, boolean)}.
+	 * @throws SQLException 
+	 * @throws GroupAlreadyExists 
+	 * @throws ForbiddenAction 
+	 * @throws InvalidMessage 
 	 */
 	@Test
-	public void testHandleMessageRequestTrue() {
-		fail("Not yet implemented");
+	public void testSendMessageThrowingRequest() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
+		ramen.login("benjamin.reyes@etts.com","bnrsem747");
+		ramen.createGroup("socialgroupofBenj", "desc", null, true, false, true);
+		ramen.login("almudena.alonso@alca.es", "aaaoas756");
+		ramen.joinGroup(ramen.getDAO().getGdb().getGroup("socialgroupofbenj"));
+		ramen.sendMessage(ramen.getDAO().getGdb().getGroup("socialgroupofbenj"), "I will throw a request", "test", false);
+		ramen.login("benjamin.reyes@etts.com","bnrsem747");
+		assertTrue(ramen.listInbox().size()==1);
+		assertTrue(ramen.listInbox().get(0).getReference() instanceof MessageRequest);
 	}
 
-	
 	@Test
-	public void testHandleMessageRequestFalse() {
-		fail("Not yet implemented");
+	public void testHandleMessageRequestTrue() throws SQLException, InvalidMessage, ForbiddenAction, GroupAlreadyExists {
+		ramen.login("jesus.reyes@alla.net","jsrsat447");
+		ramen.createGroup("socialgroupofJesus", "desc", null, true, false, true);
+		ramen.login("almudena.alonso@alca.es", "aaaoas756");
+		ramen.joinGroup(ramen.getDAO().getGdb().getGroup("socialgroupofjesus"));
+		ramen.sendMessage(ramen.getDAO().getGdb().getGroup("socialgroupofjesus"), "I will throw a request", "test", false);
+		ramen.login("jesus.reyes@alla.net","jsrsat447");
+		ramen.handleRequest((Request) ramen.listInbox().get(0).getReference(), true);
+		assertTrue(ramen.listInbox().size()==2);
 	}
 	
 	@Test
-	public void testHandleMessageRequestTwice() {
-		fail("Not yet implemented");
+	public void testHandleMessageRequestFalse() throws SQLException, InvalidMessage, ForbiddenAction, GroupAlreadyExists {
+		ramen.login("pedro.reyes@etts.com","porsem447");
+		ramen.createGroup("socialgroupofpedro", "desc", null, true, false, true);
+		ramen.login("almudena.alonso@alca.es", "aaaoas756");
+		ramen.joinGroup(ramen.getDAO().getGdb().getGroup("socialgroupofpedro"));
+		ramen.sendMessage(ramen.getDAO().getGdb().getGroup("socialgroupofpedro"), "I will throw a request", "test", false);
+		ramen.login("pedro.reyes@etts.com","porsem447");
+		ramen.handleRequest((Request) ramen.listInbox().get(0).getReference(), false);
+		assertTrue(ramen.listInbox().size()==1);
+	}
+	
+	@Test(expected=ForbiddenAction.class)
+	public void testHandleMessageRequestTwice() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
+		ramen.login("alvaro.reyes@ddm.es","aorsds545");
+		ramen.createGroup("socialgroupofalvaro", "desc", null, true, false, true);
+		ramen.login("almudena.alonso@alca.es", "aaaoas756");
+		ramen.joinGroup(ramen.getDAO().getGdb().getGroup("socialgroupofalvaro"));
+		ramen.sendMessage(ramen.getDAO().getGdb().getGroup("socialgroupofalvaro"), "I will throw a request", "test", false);
+		ramen.login("alvaro.reyes@ddm.es","aorsds545");
+		ramen.handleRequest((Request) ramen.listInbox().get(0).getReference(), false);
+		ramen.handleRequest((Request) ramen.listInbox().get(0).getReference(), true);
+		assertTrue(ramen.listInbox().size()==1);
 	}
 	
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#handleJoinRequest(jp.ramen.JoinRequest, boolean)}.
+	 * @throws SQLException 
+	 * @throws GroupAlreadyExists 
+	 * @throws ForbiddenAction 
+	 * @throws InvalidMessage 
 	 */
 	@Test
-	public void testHandleJoinRequestTrue() {
-		fail("Not yet implemented");
+	public void testHandleJoinRequestTrue() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
+		ramen.login("marta.reyes@delta.hom","marsdm448");
+		ramen.createGroup("socialgroupofmarta", "desc", null, true, true, false);
+		ramen.login("almudena.alonso@alca.es", "aaaoas756");
+		ramen.joinGroup(ramen.getDAO().getGdb().getGroup("socialgroupofmarta"));
+		ramen.login("marta.reyes@delta.hom","marsdm448");		
+		ramen.handleRequest((Request) ramen.listInbox().get(0).getReference(), true);
+		assertTrue(ramen.getDAO().getGdb().getGroup("socialgroupofmarta").getMembers().size()==2);
+		ramen.login("almudena.alonso@alca.es", "aaaoas756");
+		assertTrue(ramen.getDAO().getGdb().getGroup("socialgroupofmarta").getMembers().contains(ramen.getCurrentUser()));
 	}
 
 	@Test
-	public void testHandleJoinRequestFalse() {
-		fail("Not yet implemented");
+	public void testHandleJoinRequestFalse() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
+		ramen.login("angel.moneda@etts.com","almaem457");
+		ramen.createGroup("socialgroupofangel", "desc", null, true, true, false);
+		ramen.login("almudena.alonso@alca.es", "aaaoas756");
+		ramen.joinGroup(ramen.getDAO().getGdb().getGroup("socialgroupofangel"));
+		ramen.login("angel.moneda@etts.com","almaem457");	
+		ramen.handleRequest((Request) ramen.listInbox().get(0).getReference(), false);
+		assertFalse(ramen.getDAO().getGdb().getGroup("socialgroupofangel").getMembers().size()==2);
+		ramen.login("almudena.alonso@alca.es", "aaaoas756");
+		assertFalse(ramen.getDAO().getGdb().getGroup("socialgroupofangel").getMembers().contains(ramen.getCurrentUser()));
 	}
 
-	@Test
-	public void testHandleJoinRequestTwice() {
-		fail("Not yet implemented");
+	@Test(expected=ForbiddenAction.class)
+	public void testHandleJoinRequestTwice() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
+		ramen.login("blanca.atila@ddm.es","baaads545");
+		ramen.createGroup("socialgroupofblanca", "desc", null, true, true, false);
+		ramen.login("almudena.alonso@alca.es", "aaaoas756");
+		ramen.joinGroup(ramen.getDAO().getGdb().getGroup("socialgroupofblanca"));
+		ramen.login("blanca.atila@ddm.es","baaads545");
+		ramen.handleRequest((Request) ramen.listInbox().get(0).getReference(), false);
+		ramen.handleRequest((Request) ramen.listInbox().get(0).getReference(), true);
+		assertFalse(ramen.getDAO().getGdb().getGroup("socialgroupofblanca").getMembers().size()==2);
+		ramen.login("almudena.alonso@alca.es", "aaaoas756");
+		assertFalse(ramen.getDAO().getGdb().getGroup("socialgroupofblanca").getMembers().contains(ramen.getCurrentUser()));
 	}
 
 	

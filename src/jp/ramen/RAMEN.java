@@ -10,7 +10,8 @@ import java.util.List;
 import jp.ramen.exceptions.*;
 
 /**
- * Main interface. This would be the API of the network
+ * Main interface. This would be the API of the network. The interface is supposed to use just functions
+ * from this module and a couple of getters from the other ones.
  * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
  * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
  */
@@ -202,12 +203,14 @@ public class RAMEN {
 	 * @param accepted
 	 * @return true if it was possible, false otherwise
 	 * @throws SQLException
+	 * @throws ForbiddenAction 
 	 */
-	public boolean handleRequest(Request r, boolean accepted) throws SQLException {
+	public boolean handleRequest(Request r, boolean accepted) throws SQLException, ForbiddenAction {
 		MessageDAO mdb = ddb.getMdb();
 		GroupDAO gdb = ddb.getGdb();
-	
-		if(accepted) {
+		
+		
+		if(accepted && r.isAccepted()) {
 			if(r instanceof MessageRequest) { //r.requestingMessage()
 				mdb.acceptMessage((MessageRequest) r);
 				mdb.delLocalMessage(currentUser, r);
@@ -216,10 +219,12 @@ public class RAMEN {
 				r.setRequest(accepted);
 				mdb.delLocalMessage(currentUser, r);
 			}
-		} else {
+		} else if(r.isAccepted()) {
 			mdb.delLocalMessage(currentUser, r);
 			r.setRequest(accepted);
 		}
+		else 
+			throw new ForbiddenAction("The request was already handled");
 		return true;
 	}
 
