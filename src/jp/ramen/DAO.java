@@ -143,4 +143,15 @@ public class DAO {
 			if(buf != null) buf.close();
 		}
 	}
+	
+	/**
+	 * Refreshes the system from db
+	 * @throws Exception
+	 */
+	void refresh() throws Exception {
+		udb.clear();
+		gdb.clear();
+		mdb.clear();
+		init();
+	}
 }

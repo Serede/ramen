@@ -155,6 +155,13 @@ public class GroupDAO { //TODO does not extend
 	}
 	
 	/**
+	 * Clears memory map
+	 */
+	public void clear() {
+		groups = new TreeMap<>();
+	}
+	
+	/**
 	 * Add a group to the db
 	 * @param g
 	 * @return true if it was possible, false otherwise
@@ -301,7 +308,7 @@ public class GroupDAO { //TODO does not extend
 	}
 	
 	/**
-	 * 
+	 * Lists groups
 	 * @return a collection of all groups in the system
 	 */
 	public Collection<Group> listGroups() {

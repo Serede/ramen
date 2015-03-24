@@ -83,7 +83,7 @@ public abstract class User extends Entity {
 	/**
 	 * Unblocks the entity
 	 * @param e
-	 * @return
+	 * @return true if it was possible, false otherwise
 	 */
 	public boolean unblock(Entity e) {
 		if(blocked.contains(e)==false) return false;
@@ -115,7 +115,8 @@ public abstract class User extends Entity {
 	public boolean addToInbox(Message m, boolean read) {
 		/* blocked ? */
 		if(blocked.contains(m.getAuthor())) return true;
-		if(blocked.contains(m.getTo())) return true; //TODO: Review
+		if(m.getTo() instanceof Group && blocked.contains(m.getTo()))
+			return true;
 		
 		/* Check whether is already there*/
 		for(LocalMessage local: inbox) {
@@ -158,7 +159,7 @@ public abstract class User extends Entity {
 	/**
 	 * Checks the user password
 	 * @param pass
-	 * @return
+	 * @return true if it matches, false otherwise
 	 */
 	public boolean checkPassword(String pass) {
 		return this.pass.equals(UserDAO.generateSHA(pass));

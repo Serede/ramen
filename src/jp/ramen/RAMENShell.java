@@ -5,12 +5,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 
 import jp.ramen.exceptions.ForbiddenAction;
 import jp.ramen.exceptions.GroupAlreadyExists;
 import jp.ramen.exceptions.InvalidMessage;
 
-public class RAMENTesterApp {
+/**
+ * Terminal-mode demo using RAMEN API
+ * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
+ */
+public class RAMENShell {
 	private static RAMEN app;
 	private static boolean running=true;
 	
@@ -47,7 +53,7 @@ public class RAMENTesterApp {
 				System.out.print("> "); action = console.readLine();
 				try {
 					System.out.println("Result of the action: " + handleCommand(action));
-				} catch (ForbiddenAction | InvalidMessage | GroupAlreadyExists | SQLException e) {
+				} catch (Exception e) {
 					System.out.println(e);
 				}
 			}
@@ -210,12 +216,13 @@ public class RAMENTesterApp {
 			int rvindex = Integer.parseInt(words[1]);
 			Question q = (Question) app.listInbox().get(rvindex).getReference();
 			if(rvindex>=app.listInbox().size()) return false;;
+			List<Answer> c = app.reviewQuestion((Question) app.listInbox().get(rvindex).getReference());
 			System.out.println(q.howManyAnswered() + " students answered:");
 			printCollection(q.whoAnswered());
 			System.out.println(q.howManyDidntAnswer() + " students didn't answer yet:");
 			printCollection(q.whoDidntAnswer());
 			System.out.println("Answers:");
-			printCollection(app.reviewQuestion((Question) app.listInbox().get(rvindex).getReference()));
+			printCollection(c);
 			return true;
 			
 		case "b":
@@ -262,7 +269,6 @@ public class RAMENTesterApp {
 		int i = 0;
 		for(Object t: c) {
 			System.out.println("<"+(i++)+"> "+t);
-			System.out.println();
 		}
 	}
 	private static void displayHelp() {

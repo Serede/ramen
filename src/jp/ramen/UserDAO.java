@@ -13,6 +13,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
+import jp.ramen.exceptions.ForbiddenAction;
+
 /**
  * Implementation of the functions related to users and the db
  * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
@@ -51,7 +53,7 @@ public class UserDAO {
 
 	/**
 	 * Searches for an user with his/her name
-	 * @param uid
+	 * @param name
 	 * @return the user if exists, null otherwise
 	 */
 	public User getUser(String name) {
@@ -76,9 +78,9 @@ public class UserDAO {
 	}
 
 	/**
-	 * Generates the sha-1 of the string for the password
+	 * Generates the SHA-1 of the string for the password
 	 * @param s
-	 * @return
+	 * @return SHA-1 hashed password
 	 */
 	public static String generateSHA(String s) {
 		MessageDigest md;
@@ -220,13 +222,21 @@ public class UserDAO {
 	}
 	
 	/**
+	 * Clears memory map
+	 */
+	public void clear() {
+		users = new TreeMap<>();
+	}
+	
+	/**
 	 * Add an entity to blocked in db
 	 * @param u
 	 * @param blck
 	 * @return true if it was possible, false otherwise
 	 * @throws SQLException
+	 * @throws ForbiddenAction 
 	 */
-	public boolean addBlock(User u, Entity blck) throws SQLException {
+	public boolean addBlock(User u, Entity blck) throws SQLException, ForbiddenAction {
 		Connection db = null;
 		Statement stmt = null;
 		DAO ddb = DAO.getInstance();
@@ -244,7 +254,7 @@ public class UserDAO {
 							udb.getID((User) blck) :
 									gdb.getID((Group) blck))
 					+ ")";
-			if(u.block(blck)==false) return false;
+			if(u.block(blck)==false) throw new ForbiddenAction("You can not block that!");
 			stmt.executeUpdate(insert_block);
 			
 			return true;
@@ -260,7 +270,7 @@ public class UserDAO {
 	 * Removes an entity from the blocked list
 	 * @param u
 	 * @param blck
-	 * @return
+	 * @return true if it was possible, false otherwise
 	 * @throws SQLException
 	 */
 	public boolean delBlock(User u, Entity blck) throws SQLException {
@@ -292,7 +302,7 @@ public class UserDAO {
 	}
 	
 	/**
-	 * 
+	 * Lists users
 	 * @return the list of users
 	 */
 	public Collection<User> listUsers() {

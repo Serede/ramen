@@ -121,7 +121,7 @@ public class RAMENTest {
 	}
 	
 	/**
-	 * Test method for {@link jp.ramen.RAMEN#createGroup()} when you are a Sense.
+	 * Test method for createGroup() when you are a Sensei.
 	 * @throws SQLException 
 	 * @throws ForbiddenAction 
 	 */
@@ -424,9 +424,10 @@ public class RAMENTest {
 	/**
 	 * Test method for block. Students blocks a Sensei (not allowed, return false)
 	 * @throws SQLException 
+	 * @throws ForbiddenAction 
 	 */
-	@Test
-	public void testBlockStudentBlocksSensei() throws SQLException {
+	@Test(expected=ForbiddenAction.class)
+	public void testBlockStudentBlocksSensei() throws SQLException, ForbiddenAction {
 		ramen.login("maria.martin@ddm.es", "mamnds455");
 		assertFalse(ramen.block(ramen.getDAO().getUdb().getUser("leonardo.martin@mail.gob")));
 		assertFalse(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getUdb().getUser("leonardo.martin@mail.gob")));
@@ -435,9 +436,10 @@ public class RAMENTest {
 	/**
 	 * A Students blocks another student
 	 * @throws SQLException
+	 * @throws ForbiddenAction 
 	 */
 	@Test
-	public void testBlockStudentBlocksStudent() throws SQLException {
+	public void testBlockStudentBlocksStudent() throws SQLException, ForbiddenAction {
 		ramen.login("maria.martin@ddm.es", "mamnds455");
 		assertTrue(ramen.block(ramen.getDAO().getUdb().getUser("luis.martin@etp.com")));
 		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getUdb().getUser("luis.martin@etp.com")));
@@ -446,9 +448,10 @@ public class RAMENTest {
 	/**
 	 * A sensei blocks another Sensei
 	 * @throws SQLException
+	 * @throws ForbiddenAction 
 	 */
 	@Test
-	public void testBlockSenseiBlocksSensei() throws SQLException {
+	public void testBlockSenseiBlocksSensei() throws SQLException, ForbiddenAction {
 		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
 		assertTrue(ramen.block(ramen.getDAO().getUdb().getUser("fernando.lopez@mail.gob")));
 		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getUdb().getUser("fernando.lopez@mail.gob")));
@@ -457,9 +460,10 @@ public class RAMENTest {
 	/**
 	 * A sensei blocks a student
 	 * @throws SQLException
+	 * @throws ForbiddenAction 
 	 */
 	@Test
-	public void testBlockSenseiBlocksStudent() throws SQLException {
+	public void testBlockSenseiBlocksStudent() throws SQLException, ForbiddenAction {
 		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
 		assertTrue(ramen.block(ramen.getDAO().getUdb().getUser("luis.martin@etp.com")));
 	}
@@ -513,9 +517,10 @@ public class RAMENTest {
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#unblock(jp.ramen.Entity)}.
 	 * @throws SQLException 
+	 * @throws ForbiddenAction 
 	 */
 	@Test
-	public void testUnblockAnUser() throws SQLException {
+	public void testUnblockAnUser() throws SQLException, ForbiddenAction {
 		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
 		assertTrue(ramen.block(ramen.getDAO().getUdb().getUser("luis.martin@etp.com")));
 		assertTrue(ramen.unblock(ramen.getDAO().getUdb().getUser("luis.martin@etp.com")));

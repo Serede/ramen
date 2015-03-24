@@ -2,6 +2,7 @@ package jp.ramen;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.sql.*;
 
@@ -160,6 +161,13 @@ public class MessageDAO {
 	}
 	
 	/**
+	 * Clears memory map
+	 */
+	public void clear() {
+		messages = new TreeMap<>();
+	}
+	
+	/**
 	 * Adds a message to the db
 	 * @param msg
 	 * @return true if it was possible, false otherwise
@@ -275,7 +283,8 @@ public class MessageDAO {
 						+ ","
 						+ false
 						+ ")";
-				stmt.execute(query);
+				if(!((User) to).getBlocked().contains(m.getAuthor()))
+					stmt.execute(query);
 			} else {
 				for(User u : ((Group)to).getMembers()) {
 					String query = "INSERT INTO U_INBOX VALUES("
@@ -285,7 +294,8 @@ public class MessageDAO {
 							+ ","
 							+ false
 							+ ")";
-					stmt.execute(query);
+					if(!u.getBlocked().contains(to) && !u.getBlocked().contains(m.getAuthor()))
+						stmt.execute(query);
 				}
 			}
 			to.addToInbox(m);
@@ -394,7 +404,7 @@ public class MessageDAO {
 	/**
 	 * Accepts a message request
 	 * @param mr
-	 * @return
+	 * @return true if it was possible, false otherwise
 	 * @throws SQLException
 	 */
 	public boolean acceptMessage(MessageRequest mr) throws SQLException {

@@ -176,7 +176,8 @@ public class RAMEN {
 	 */
 	public boolean sendAnswer(Entity to, String subject, String text, Question q) throws SQLException, InvalidMessage, ForbiddenAction {
 		if (currentUser.canAnswer()
-				&& ((Group) to).getMembers().contains(currentUser)) {
+				&& ((Group) to).getMembers().contains(currentUser)
+				&& !q.whoAnswered().contains(currentUser)) {
 			MessageDAO mdb = ddb.getMdb();
 			Message msg = new Answer(subject, text, currentUser, to, q);
 			return mdb.addMessage(msg);
@@ -187,7 +188,7 @@ public class RAMEN {
 	/**
 	 * Reviews answers of a question
 	 * @param q
-	 * @return
+	 * @return list of answers
 	 * @throws ForbiddenAction
 	 */
 	public List<Answer> reviewQuestion(Question q) throws ForbiddenAction {
@@ -246,6 +247,8 @@ public class RAMEN {
 	public boolean joinGroup(Group g) throws SQLException, InvalidMessage  {
 		GroupDAO gdb = ddb.getGdb();
 		MessageDAO mdb = ddb.getMdb();
+		
+		if(g==null) throw new IllegalArgumentException();
 		
 		for(Group sg : g.getSubgroups())
 			if(joinGroup(sg)==false) return false;
@@ -321,14 +324,16 @@ public class RAMEN {
 	 * @param e
 	 * @return true if it was possible, false otherwise
 	 * @throws SQLException
+	 * @throws ForbiddenAction 
 	 */
-	public boolean block(Entity e) throws SQLException {
+	public boolean block(Entity e) throws SQLException, ForbiddenAction {
 		UserDAO udb = ddb.getUdb();
+		boolean ret = true;
 		if(e instanceof Group) {
 			for(Group g : ((Group) e).getSubgroups())
-				if(block(g)==false) return false;
+				ret = ret & block(g);
 		}
-		return udb.addBlock(currentUser, e);
+		return udb.addBlock(currentUser, e) && ret;
 	}
 	
 	/**
