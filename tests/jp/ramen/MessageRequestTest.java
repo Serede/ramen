@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
+ * MessageRequest test
  * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
  * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
  */
@@ -32,24 +33,35 @@ public class MessageRequestTest {
 		u2.addToInbox(r);
 	}
 
-	
+	/**
+	 * Get accepted
+	 */
 	@Test
 	public void getAccepted() {
 		assertTrue(r.isAccepted());
 	} 
 	
+	/**
+	 * Set accepted
+	 */
 	@Test
 	public void setAcceptedTrue() {
 		r.setRequest(true);
 		assertTrue(u2.getInbox().get(1).getReference()==m);
 	}
 	
+	/**
+	 * Set accepted
+	 */
 	@Test
 	public void setAcceptedFalse() {
 		r.setRequest(false);
 		assertFalse(u2.getInbox().contains(m));
 	}
 	
+	/**
+	 * Once the request is handled, you can not set accepted again
+	 */
 	@Test
 	public void setAcceptedTwice() {
 		r.setRequest(false);

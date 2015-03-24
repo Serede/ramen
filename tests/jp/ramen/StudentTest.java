@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
+ * Student test
  * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
  * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
  */
@@ -33,6 +34,7 @@ public class StudentTest {
 
 	/**
 	 * Test method for {@link jp.ramen.Student#canAnswer()}.
+	 * A student can always answer
 	 */
 	@Test
 	public void testCanAnswer() {

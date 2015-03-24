@@ -1,6 +1,3 @@
-/**
- * 
- */
 package jp.ramen;
 
 import static org.junit.Assert.*;
@@ -66,6 +63,12 @@ public class RAMENTest {
 		assertTrue(ramen.getCurrentUser().getInbox().size()==1);
 	}
 
+	/**
+	 * Send question to an user, so it is forbidden
+	 * @throws ForbiddenAction
+	 * @throws InvalidMessage
+	 * @throws SQLException
+	 */
 	@Test(expected=ForbiddenAction.class)
 	public void testSendQuestionUser() throws ForbiddenAction, InvalidMessage, SQLException {
 		ramen.login("maria.martin@ddm.es", "mamnds455");
@@ -74,6 +77,13 @@ public class RAMENTest {
 		assertTrue(ramen.getCurrentUser().getInbox().size()==1);
 	}
 	
+	/**
+	 * Send question when you are not the owner. It is forbidden
+	 * @throws ForbiddenAction
+	 * @throws InvalidMessage
+	 * @throws SQLException
+	 * @throws GroupAlreadyExists
+	 */
 	@Test(expected=ForbiddenAction.class)
 	public void testSendQuestionStudyNoOwner() throws ForbiddenAction, InvalidMessage, SQLException, GroupAlreadyExists {
 		ramen.login("oscar.casals@mail.gob", "orcsmb457");
@@ -87,24 +97,31 @@ public class RAMENTest {
 	
 	/**
 	 * Test method for {@link jp.ramen.RAMEN#login(java.lang.String, java.lang.String)}.
+	 * No existing user
 	 */
 	@Test
 	public void testLoginNoUser() {
 		assertFalse(ramen.login("iamnotanuser", "thisisnotapassword"));
 	}
 
+	/**
+	 * Login with a valid user but a wrong password
+	 */
 	@Test
 	public void testLoginWrongPass() {
 		assertFalse(ramen.login("maria.martin@ddm.es", "thisisnotapassword"));
 	}
 	
+	/**
+	 * Login in normal way
+	 */
 	@Test
 	public void testLogin() {
 		assertTrue(ramen.login("maria.martin@ddm.es", "mamnds455"));
 	}
 	
 	/**
-	 * Test method for {@link jp.ramen.RAMEN#createGroup()}.
+	 * Test method for {@link jp.ramen.RAMEN#createGroup()} when you are a Sense.
 	 * @throws SQLException 
 	 * @throws ForbiddenAction 
 	 */
@@ -115,24 +132,48 @@ public class RAMENTest {
 		assertTrue(ramen.createGroup("group1", "desc", null, false, false, false));
 	}
 	
+	/**
+	 * You can not create a study group if you are a student
+	 * @throws ForbiddenAction
+	 * @throws SQLException
+	 * @throws GroupAlreadyExists
+	 */
 	@Test(expected=ForbiddenAction.class)
 	public void testCreateGroupStudyStudent() throws ForbiddenAction, SQLException, GroupAlreadyExists{
 		ramen.login("maria.martin@ddm.es", "mamnds455");
 		assertFalse(ramen.createGroup("group11", "desc", null, false, false, false));
 	}
 	
+	/**
+	 * Create a social group from a student account
+	 * @throws ForbiddenAction
+	 * @throws SQLException
+	 * @throws GroupAlreadyExists
+	 */
 	@Test
 	public void testCreateGroupSocialStudent() throws ForbiddenAction, SQLException, GroupAlreadyExists{
 		ramen.login("maria.martin@ddm.es", "mamnds455");
 		assertTrue(ramen.createGroup("group111", "desc", null, true, false, false));
 	}
 	
+	/**
+	 * You can not create a social group from a sensei account
+	 * @throws ForbiddenAction
+	 * @throws SQLException
+	 * @throws GroupAlreadyExists
+	 */
 	@Test(expected=ForbiddenAction.class)
 	public void testCreateGroupSocialSensei() throws ForbiddenAction, SQLException, GroupAlreadyExists {
 		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
 		assertFalse(ramen.createGroup("group1111", "desc", null, true, false, false));
 	}
 	
+	/**
+	 * You can not create the same group twice
+	 * @throws ForbiddenAction
+	 * @throws SQLException
+	 * @throws GroupAlreadyExists
+	 */
 	@Test(expected=GroupAlreadyExists.class)
 	public void testCreateGroupTwice() throws ForbiddenAction, SQLException, GroupAlreadyExists {
 		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
@@ -141,7 +182,7 @@ public class RAMENTest {
 	}
 	
 	/**
-	 * Test method for {@link jp.ramen.RAMEN#joinGroup(jp.ramen.Group)}.
+	 * Test method for join a study group as student
 	 * @throws SQLException 
 	 * @throws GroupAlreadyExists 
 	 * @throws ForbiddenAction 
@@ -155,6 +196,13 @@ public class RAMENTest {
 		assertTrue(ramen.joinGroup(ramen.getDAO().getGdb().getGroup("group3")));
 	}
 
+	/**
+	 * Test for join a social group as a student
+	 * @throws ForbiddenAction
+	 * @throws GroupAlreadyExists
+	 * @throws SQLException
+	 * @throws InvalidMessage
+	 */
 	@Test
 	public void testJoinGroupStudentsjoinsSocial() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
 		ramen.login("maria.martin@ddm.es", "mamnds455");
@@ -163,6 +211,13 @@ public class RAMENTest {
 		assertTrue(ramen.joinGroup(ramen.getDAO().getGdb().getGroup("group33")));
 	}
 	
+	/**
+	 * Test for joining a group, a JoinRequest is generated
+	 * @throws ForbiddenAction
+	 * @throws GroupAlreadyExists
+	 * @throws SQLException
+	 * @throws InvalidMessage
+	 */
 	@Test
 	public void testJoinGroupThrowingRequest() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
 		ramen.login("maria.martin@ddm.es", "mamnds455");
@@ -173,6 +228,13 @@ public class RAMENTest {
 		assertTrue(ramen.getCurrentUser().getInbox().size()==1);
 	}
 	
+	/**
+	 * Joining a group implies joining the subgroups
+	 * @throws ForbiddenAction
+	 * @throws GroupAlreadyExists
+	 * @throws SQLException
+	 * @throws InvalidMessage
+	 */
 	@Test
 	public void testJoinGroupStudentsGroupsAndSubgroups() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
 		ramen.login("maria.martin@ddm.es", "mamnds455");
@@ -184,7 +246,7 @@ public class RAMENTest {
 	}
 	
 	/**
-	 * Test method for {@link jp.ramen.RAMEN#sendAnswer(jp.ramen.Entity, java.lang.String, java.lang.String, jp.ramen.Question)}.
+	 * You can not answer question as a Sensei
 	 * @throws SQLException 
 	 * @throws InvalidMessage 
 	 * @throws ForbiddenAction 
@@ -196,6 +258,14 @@ public class RAMENTest {
 		ramen.login("elvis.domingo@mail.gob", "esdomb467");
 		ramen.sendAnswer(ramen.getDAO().getGdb().getGroup("studygroupofoscar"), "I will fail", "fail?", (Question) ramen.getCurrentUser().getInbox().get(0).getReference());
 	}
+	
+	/**
+	 * Answer test
+	 * @throws ForbiddenAction
+	 * @throws InvalidMessage
+	 * @throws SQLException
+	 * @throws GroupAlreadyExists
+	 */
 	@Test
 	public void testSendAnswerStudent() throws ForbiddenAction, InvalidMessage, SQLException, GroupAlreadyExists {
 		ramen.login("oscar.casals@mail.gob", "orcsmb457");
@@ -213,7 +283,7 @@ public class RAMENTest {
 	//}
 	
 	/**
-	 * Test method for {@link jp.ramen.RAMEN#handleMessageRequest(jp.ramen.MessageRequest, boolean)}.
+	 * Test method for sendMessage throwing a MessageRequest
 	 * @throws SQLException 
 	 * @throws GroupAlreadyExists 
 	 * @throws ForbiddenAction 
@@ -231,6 +301,13 @@ public class RAMENTest {
 		assertTrue(ramen.listInbox().get(0).getReference() instanceof MessageRequest);
 	}
 
+	/**
+	 * Handle a Message Request (true case)
+	 * @throws SQLException
+	 * @throws InvalidMessage
+	 * @throws ForbiddenAction
+	 * @throws GroupAlreadyExists
+	 */
 	@Test
 	public void testHandleMessageRequestTrue() throws SQLException, InvalidMessage, ForbiddenAction, GroupAlreadyExists {
 		ramen.login("jesus.reyes@alla.net","jsrsat447");
@@ -243,6 +320,13 @@ public class RAMENTest {
 		assertTrue(ramen.listInbox().size()==2);
 	}
 	
+	/**
+	 * Handle a Message Request (false case)
+	 * @throws SQLException
+	 * @throws InvalidMessage
+	 * @throws ForbiddenAction
+	 * @throws GroupAlreadyExists
+	 */
 	@Test
 	public void testHandleMessageRequestFalse() throws SQLException, InvalidMessage, ForbiddenAction, GroupAlreadyExists {
 		ramen.login("pedro.reyes@etts.com","porsem447");
@@ -255,6 +339,13 @@ public class RAMENTest {
 		assertTrue(ramen.listInbox().size()==1);
 	}
 	
+	/**
+	 * You can not handle a request twice
+	 * @throws ForbiddenAction
+	 * @throws GroupAlreadyExists
+	 * @throws SQLException
+	 * @throws InvalidMessage
+	 */
 	@Test(expected=ForbiddenAction.class)
 	public void testHandleMessageRequestTwice() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
 		ramen.login("alvaro.reyes@ddm.es","aorsds545");
@@ -269,7 +360,7 @@ public class RAMENTest {
 	}
 	
 	/**
-	 * Test method for {@link jp.ramen.RAMEN#handleJoinRequest(jp.ramen.JoinRequest, boolean)}.
+	 * Test method for handle a join request (true case)
 	 * @throws SQLException 
 	 * @throws GroupAlreadyExists 
 	 * @throws ForbiddenAction 
@@ -288,6 +379,13 @@ public class RAMENTest {
 		assertTrue(ramen.getDAO().getGdb().getGroup("socialgroupofmarta").getMembers().contains(ramen.getCurrentUser()));
 	}
 
+	/**
+	 * Test for handle a join request (false case)
+	 * @throws ForbiddenAction
+	 * @throws GroupAlreadyExists
+	 * @throws SQLException
+	 * @throws InvalidMessage
+	 */
 	@Test
 	public void testHandleJoinRequestFalse() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
 		ramen.login("angel.moneda@etts.com","almaem457");
@@ -301,6 +399,13 @@ public class RAMENTest {
 		assertFalse(ramen.getDAO().getGdb().getGroup("socialgroupofangel").getMembers().contains(ramen.getCurrentUser()));
 	}
 
+	/**
+	 * You can not handle a request twice
+	 * @throws ForbiddenAction
+	 * @throws GroupAlreadyExists
+	 * @throws SQLException
+	 * @throws InvalidMessage
+	 */
 	@Test(expected=ForbiddenAction.class)
 	public void testHandleJoinRequestTwice() throws ForbiddenAction, GroupAlreadyExists, SQLException, InvalidMessage {
 		ramen.login("blanca.atila@ddm.es","baaads545");
@@ -317,7 +422,7 @@ public class RAMENTest {
 
 	
 	/**
-	 * Test method for {@link jp.ramen.RAMEN#block(jp.ramen.Entity)}.
+	 * Test method for block. Students blocks a Sensei (not allowed, return false)
 	 * @throws SQLException 
 	 */
 	@Test
@@ -327,6 +432,10 @@ public class RAMENTest {
 		assertFalse(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getUdb().getUser("leonardo.martin@mail.gob")));
 	}
 	
+	/**
+	 * A Students blocks another student
+	 * @throws SQLException
+	 */
 	@Test
 	public void testBlockStudentBlocksStudent() throws SQLException {
 		ramen.login("maria.martin@ddm.es", "mamnds455");
@@ -334,6 +443,10 @@ public class RAMENTest {
 		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getUdb().getUser("luis.martin@etp.com")));
 	}
 
+	/**
+	 * A sensei blocks another Sensei
+	 * @throws SQLException
+	 */
 	@Test
 	public void testBlockSenseiBlocksSensei() throws SQLException {
 		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
@@ -341,12 +454,22 @@ public class RAMENTest {
 		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getUdb().getUser("fernando.lopez@mail.gob")));
 	}
 	
+	/**
+	 * A sensei blocks a student
+	 * @throws SQLException
+	 */
 	@Test
 	public void testBlockSenseiBlocksStudent() throws SQLException {
 		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
 		assertTrue(ramen.block(ramen.getDAO().getUdb().getUser("luis.martin@etp.com")));
 	}
 
+	/**
+	 * A sensei blocks a group
+	 * @throws SQLException
+	 * @throws ForbiddenAction
+	 * @throws GroupAlreadyExists
+	 */
 	@Test
 	public void testBlockSenseiBlocksGroup() throws SQLException, ForbiddenAction, GroupAlreadyExists {
 		ramen.login("maria.martin@ddm.es", "mamnds455");
@@ -356,6 +479,12 @@ public class RAMENTest {
 		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getGdb().getGroup("group2")));
 	}
 	
+	/**
+	 * A student blocks a group
+	 * @throws SQLException
+	 * @throws ForbiddenAction
+	 * @throws GroupAlreadyExists
+	 */
 	@Test
 	public void testBlockStudentBlocksGroup() throws SQLException, ForbiddenAction, GroupAlreadyExists {
 		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
@@ -365,6 +494,12 @@ public class RAMENTest {
 		assertTrue(ramen.getCurrentUser().getBlocked().contains(ramen.getDAO().getGdb().getGroup("group22")));
 	}
 	
+	/**
+	 * If you block a group, you also block the subgroups
+	 * @throws SQLException
+	 * @throws ForbiddenAction
+	 * @throws GroupAlreadyExists
+	 */
 	@Test
 	public void testBlockWithSubgroups() throws SQLException, ForbiddenAction, GroupAlreadyExists {
 		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
@@ -410,5 +545,4 @@ public class RAMENTest {
 		ramen.login("leonardo.martin@mail.gob", "lomnmb757");
 		assertTrue(ramen.getCurrentUser().equals(ramen.getDAO().getUdb().getUser("leonardo.martin@mail.gob")));
 	}
-
 }

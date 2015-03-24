@@ -9,6 +9,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
+ * Simple test for UserDAO
+ * There is no a whole test because checking the correctness needs the database,
+ * so we checked all the database functions and queries manually. 
  * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
  * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
  */

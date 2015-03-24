@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
+ * Sensei test
  * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
  * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
  */
@@ -33,6 +34,7 @@ public class SenseiTest {
 
 	/**
 	 * Test method for {@link jp.ramen.Sensei#canAnswer()}.
+	 * A sensei can never answer
 	 */
 	@Test
 	public void testCanAnswer() {

@@ -4,7 +4,12 @@ import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-
+/**
+ * SocialGroup test
+ * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
+ *
+ */
 public class SocialGroupTest {
 	private User u1;
 	private SocialGroup g;
@@ -15,10 +20,17 @@ public class SocialGroupTest {
 		g = new SocialGroup("subj","desc",null,u1,true,true);
 	}
 
+	/**
+	 * Is moderated
+	 */
 	@Test
 	public void testIsModerated() {
 		assertTrue(g.isModerated());
 	}
+	
+	/**
+	 * Is private
+	 */
 	@Test
 	public void testIsPrivate() {
 		assertTrue(g.isPrivate());

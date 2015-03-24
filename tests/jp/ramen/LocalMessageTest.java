@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
+ * LocalMessage test
  * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
  * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
  */
@@ -52,6 +53,9 @@ public class LocalMessageTest {
 		assertFalse(u2.getInbox().get(0).isRead());
 	}
 	
+	/**
+	 * Test for isRead()
+	 */
 	@Test
 	public void testIsReadTrue() {
 		u2.getInbox().get(0).read();

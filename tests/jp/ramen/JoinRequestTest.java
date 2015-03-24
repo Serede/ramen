@@ -4,7 +4,12 @@ import static org.junit.Assert.*;
 
 import org.junit.Before;
 import org.junit.Test;
-
+/**
+ * JoinRequest test
+ * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
+ *
+ */
 public class JoinRequestTest {
 	private SocialGroup g;
 	private User u1;
@@ -18,23 +23,35 @@ public class JoinRequestTest {
 		r = new JoinRequest("msg", "text", u2, g);
 	}
 
+	/**
+	 * Get accepted
+	 */
 	@Test
 	public void getAccepted() {
 		assertTrue(r.isAccepted());
 	} 
 	
+	/**
+	 * Set accepted
+	 */
 	@Test
 	public void setAcceptedTrue() {
 		r.setRequest(true);
 		assertTrue(g.getMembers().contains(u2));
 	}
 	
+	/**
+	 * Set accepted
+	 */
 	@Test
 	public void setAcceptedFalse() {
 		r.setRequest(false);
 		assertFalse(g.getMembers().contains(u2));
 	}
 	
+	/**
+	 * Once you accept, the request is handled
+	 */
 	@Test
 	public void setAcceptedTwice() {
 		r.setRequest(false);

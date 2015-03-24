@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
+ * Question test
  * @author Sergio Fuentes de Uña "sergio.fuentesd@estudiante.uam.es"
  * @author Daniel Perdices Burrero "daniel.perdices@estudiante.uam.es"
  */
@@ -42,6 +43,10 @@ public class QuestionTest {
 		assertTrue(q.whoAnswered().contains(u2));
 	}
 
+	/**
+	 * The same answer can not be added twice
+	 * @throws InvalidMessage
+	 */
 	@Test
 	public void testAddAnswerTwice() throws InvalidMessage {
 		Answer a = new Answer("text", "text", u2, g, q);
