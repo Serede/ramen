@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.Collection;
 
 import jp.ramen.exceptions.ForbiddenAction;
+import jp.ramen.exceptions.GroupAlreadyExists;
 import jp.ramen.exceptions.InvalidMessage;
 
 public class RamenTesterApp {
@@ -45,7 +46,7 @@ public class RamenTesterApp {
 		
 	}
 
-	private static boolean handleCommand(String action) throws ForbiddenAction, SQLException, InvalidMessage {
+	private static boolean handleCommand(String action) throws ForbiddenAction, SQLException, InvalidMessage, GroupAlreadyExists {
 		String[] words = action.split(" ");
 		String[] msg = action.split("\"");
 		
@@ -153,7 +154,7 @@ public class RamenTesterApp {
 			case "i":
 			case "inbox":
 				System.out.println("Inbox");
-				printCollection(app.getInbox());
+				printCollection(app.listInbox());
 				return true;
 			case "g":
 			case "groups":
@@ -186,8 +187,8 @@ public class RamenTesterApp {
 		case "read":
 			if(words.length<2) return false;
 			int index = Integer.parseInt(words[1]);
-			if(index>app.getInbox().size()) return false;
-			return app.readMessage(app.getInbox().get(index));
+			if(index>app.listInbox().size()) return false;
+			return app.readMessage(app.listInbox().get(index));
 		case "q":
 		case "exit":
 		case "Q":
