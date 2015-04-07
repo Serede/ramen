@@ -100,16 +100,14 @@ final class InstallCard1 extends JPanel {
 
 		this.add(image);
 		this.add(text);
-		layout.putConstraint(SpringLayout.NORTH, text, 6, SpringLayout.SOUTH,
-				image);
-		layout.putConstraint(SpringLayout.NORTH, image, 6, SpringLayout.NORTH,
-				this);
-		layout.putConstraint(SpringLayout.SOUTH, text, -6, SpringLayout.SOUTH,
-				this);
 		layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, image, 0,
 				SpringLayout.HORIZONTAL_CENTER, this);
+		layout.putConstraint(SpringLayout.VERTICAL_CENTER, image, -12,
+				SpringLayout.VERTICAL_CENTER, this);
+		layout.putConstraint(SpringLayout.NORTH, text, 12, SpringLayout.SOUTH,
+				image);
 		layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, text, 0,
-				SpringLayout.HORIZONTAL_CENTER, this);
+				SpringLayout.HORIZONTAL_CENTER, image);
 	}
 }
 
