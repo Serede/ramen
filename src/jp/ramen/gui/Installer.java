@@ -71,7 +71,7 @@ public class Installer extends JFrame {
 		private static final int FIELD_WIDTH = 520;
 	
 		private JLabel pathText = new JLabel("Choose a location for RAMEN files:");
-		private WebPathField path = new WebPathField();
+		private WebPathField path = new WebPathField(new File("~/"));
 		private JLabel stText = new JLabel("Choose students text file to load:");
 		private WebFileChooserField stFile = new WebFileChooserField();
 		private JLabel prText = new JLabel("Choose professors text file to load:");
@@ -94,14 +94,14 @@ public class Installer extends JFrame {
 			this.add(prText);
 			this.add(prFile);
 			
+
 			PathFieldListener pathListener = e -> {
 				next_available[0] = true; 
 				boolean res = true;
 				for(Boolean b: next_available) {
 					res &= b;
 				}
-				paths[0] = path.getPathField().toString();
-				System.err.println(paths[0]);
+				paths[0] = path.getSelectedPath().getAbsolutePath();
 				next.setEnabled(res);
 				
 			};
@@ -115,7 +115,8 @@ public class Installer extends JFrame {
 				}
 				java.util.List<File> file = prFile.getSelectedFiles();
 				if(file.size() > 0) {
-					paths[1] = file.get(0).getPath();
+					if(file.get(0)!=null) 
+					paths[1] = file.get(0).getAbsolutePath(); //TODO: NOOOO
 					next.setEnabled(res);
 				}
 			};
@@ -129,7 +130,7 @@ public class Installer extends JFrame {
 				}
 				java.util.List<File> file = stFile.getSelectedFiles();
 				if(file.size() > 0) {
-					paths[2] = file.get(0).getPath();
+					paths[2] = file.get(0).getAbsolutePath();
 					next.setEnabled(res);
 				}
 			};
