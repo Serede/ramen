@@ -23,8 +23,9 @@ import com.alee.laf.progressbar.WebProgressBar;
 
 public class Installer extends JFrame {
 	private JButton next = new JButton("Next");
-	private static boolean next_available[] = {false, false, false};
-	private static String[] paths;
+	private JButton cancel = new JButton("Cancel");
+	private static boolean next_available[] = {true, false, false};
+	private static String[] paths={"./db", "", ""};
 	private final class InstallCard1 extends JPanel {
 		private static final long serialVersionUID = 1L;
 		private static final String IMG = "img/ebi_ramen_by_johnsu-d6sc3de.png";
@@ -71,7 +72,7 @@ public class Installer extends JFrame {
 		private static final int FIELD_WIDTH = 520;
 	
 		private JLabel pathText = new JLabel("Choose a location for RAMEN files:");
-		private WebPathField path = new WebPathField(new File("~/"));
+		private WebPathField path = new WebPathField(new File("./db"));
 		private JLabel stText = new JLabel("Choose students text file to load:");
 		private WebFileChooserField stFile = new WebFileChooserField();
 		private JLabel prText = new JLabel("Choose professors text file to load:");
@@ -101,7 +102,13 @@ public class Installer extends JFrame {
 				for(Boolean b: next_available) {
 					res &= b;
 				}
-				paths[0] = path.getSelectedPath().getAbsolutePath();
+				JOptionPane.showMessageDialog(frame, " " + path.getSelectedPath().getAbsolutePath());
+				if(path.getSelectedPath() != null)
+					paths[0] = path.getSelectedPath().getAbsolutePath();
+				else {
+					next_available[0] = false;
+					res = false;
+				}
 				next.setEnabled(res);
 				
 			};
@@ -116,7 +123,7 @@ public class Installer extends JFrame {
 				java.util.List<File> file = prFile.getSelectedFiles();
 				if(file.size() > 0) {
 					if(file.get(0)!=null) 
-					paths[1] = file.get(0).getAbsolutePath(); //TODO: NOOOO
+						paths[1] = file.get(0).getAbsolutePath(); 
 					next.setEnabled(res);
 				}
 			};
@@ -276,7 +283,6 @@ public class Installer extends JFrame {
 		overall.setSelectionEnabled(false);
 
 		JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-		JButton cancel = new JButton("Cancel");
 		
 		buttons.add(cancel);
 		buttons.add(next);
@@ -298,33 +304,46 @@ public class Installer extends JFrame {
 			// TODO improved next
 			switch(overall.getSelectedStep()) {
 			case 0: 
+				/* Settings for the card 1 */
 				clayout.next(cards);
 				overall.setSelectedStep((overall.getSelectedStep() + 1)
 								% overall.getStepsAmount());
 				next.setEnabled(false);
+				next.setText("Install");
 				break;
 			case 1:
+				/* Settings for the card 2 */
 				clayout.next(cards);
 				overall.setSelectedStep((overall.getSelectedStep() + 1)
 								% overall.getStepsAmount());
-				next.setEnabled(false);
-				break;
-			case 2:
+				cancel.setEnabled(false);
+				next.setEnabled(true);
+				next.setText("Continue");
 				try {
 					RAMEN.getInstance().install(paths[0], paths[1], paths[2]);
 				} catch (Exception e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
+					JOptionPane.showMessageDialog(frame, e1);
 				}
+				break;
+			case 2:
+				/* Setting for the card 3 */
+				clayout.next(cards);
+				overall.setSelectedStep((overall.getSelectedStep() + 1)
+						% overall.getStepsAmount());
+				
+				next.setText("Finish");
+				break;
+			case 3: 
+				/* Setting for the card 3 */
+				System.exit(0);
 			}
-			
-			
-			//clayout.next(cards);
-			//overall.setSelectedStep((overall.getSelectedStep() + 1)
-			//		% overall.getStepsAmount());
 		};
 		next.addActionListener(nextButton);
-
+		
+		ActionListener cancelButton = e ->{
+			System.exit(0);
+		};
+		cancel.addActionListener(cancelButton);
 		
 
 	}
