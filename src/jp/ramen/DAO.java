@@ -15,12 +15,12 @@ public class DAO {
 	private final static String DB_INIT = "runscript from 'init.sql'";
 	private final static String DB_USER = "eva02";
 	private final static String DB_PASS = "asuka";
-	private final static String DB_WARD = "path.lck";
 	private static String DB_URL = null;
 	private static DAO ddb = null;
 	private static UserDAO udb = null;
 	private static GroupDAO gdb = null;
 	private static MessageDAO mdb = null;
+	public final static String DB_WARD = "path.lck";
 
 	/**
 	 * Constructor (singleton)
