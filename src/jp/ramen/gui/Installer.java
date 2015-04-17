@@ -13,8 +13,6 @@ import java.io.PrintWriter;
 
 import javax.imageio.ImageIO;
 
-import org.omg.PortableServer.THREAD_POLICY_ID;
-
 import jp.ramen.DAO;
 import jp.ramen.RAMEN;
 
@@ -306,7 +304,7 @@ public class Installer extends JFrame {
 			}
 	
 			progress.setPreferredWidth(PROGRESS_WIDTH);
-			progress.setIndeterminate(true);
+			//progress.setIndeterminate(true);
 			progress.setStringPainted(true);
 			//progress.setString("Installing RAMEN...");
 	
@@ -327,36 +325,49 @@ public class Installer extends JFrame {
 			this.addAncestorListener(new AncestorListener() {
 				@Override
 				public void ancestorAdded(AncestorEvent event) {
-					PrintWriter pw = null;
-					try {
-						if (init)
-							RAMEN.getInstance().install(path, files[0],
-									files[1]);
-						else {
-							pw = new PrintWriter(DAO.DB_WARD, "UTF-8");
-							pw.println(path);
+					setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+					SwingWorker<Void, Void> task = new SwingWorker<Void,Void>() {
+						@Override
+						protected Void doInBackground() throws Exception {
+							PrintWriter pw = null;
+							try {
+								int percent = 0;
+								setProgress(0);
+								if (init)
+									RAMEN.getInstance().install(path, files[0], files[1]);
+								else {
+									pw = new PrintWriter(DAO.DB_WARD, "UTF-8");
+									pw.println(path);
+								}
+								while (percent < 100) {
+									Thread.sleep(10);
+									setProgress(++percent);
+								}
+							} catch (Exception e) {
+								throw e;
+							} finally {
+								if (pw != null) pw.close();
+							}
+							return null;
 						}
-						progress.setIndeterminate(false);
-						for (byte i = 0; i < 101; i+=10) {
-							progress.setValue(i);
-							progress.update(progress.getGraphics());
-							Thread.sleep(100);
+						
+						@Override
+						protected void done() {
+							next.setEnabled(true);
+				            setCursor(null);
 						}
-						next.setEnabled(true);
-					} catch (Exception e) {
-						JOptionPane.showMessageDialog(frame, e);
-					} finally {
-						if (pw != null) pw.close();
-					}
+					};
+					task.addPropertyChangeListener((evt) -> {
+				        progress.setValue(task.getProgress());
+					});
+					task.execute();
 				}
-	
 				@Override
 				public void ancestorRemoved(AncestorEvent event) {}
-	
 				@Override
 				public void ancestorMoved(AncestorEvent event) {}
 			});
-	}
+		}
 	}
 
 	private final class InstallCard4 extends JPanel {
