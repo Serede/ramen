@@ -9,14 +9,20 @@ import javax.swing.event.AncestorListener;
 import java.util.List;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 import javax.imageio.ImageIO;
 
+import org.omg.PortableServer.THREAD_POLICY_ID;
+
+import jp.ramen.DAO;
 import jp.ramen.RAMEN;
 
 import com.alee.extended.filechooser.WebFileChooserField;
 import com.alee.extended.filechooser.WebPathField;
 import com.alee.extended.image.WebDecoratedImage;
+import com.alee.extended.panel.CollapsiblePaneListener;
+import com.alee.extended.panel.WebCollapsiblePane;
 import com.alee.extended.progress.WebStepProgress;
 import com.alee.laf.WebLookAndFeel;
 import com.alee.laf.progressbar.WebProgressBar;
@@ -34,6 +40,7 @@ public class Installer extends JFrame {
 	
 	private String path = DFLT_PATH;
 	private String[] files = {null, null};
+	private boolean init = true;
 
 	private WebStepProgress progress = new WebStepProgress(
 			"Okaeri nasai!",
@@ -160,7 +167,7 @@ public class Installer extends JFrame {
 
 		private JLabel pathText = new JLabel("Choose a location for RAMEN files:");
 		private WebPathField inPath = new WebPathField(new File(path));
-		private JCheckBox init = new JCheckBox("RAMEN has already been installed to given location");
+		private WebCollapsiblePane dbInit = new WebCollapsiblePane("Initialise RAMEN with the data below");
 		private JLabel stText = new JLabel("Choose or drop students text file to load:");
 		private WebFileChooserField stFile = new WebFileChooserField();
 		private JLabel prText = new JLabel("Choose or drop professors text file to load:");
@@ -169,13 +176,19 @@ public class Installer extends JFrame {
 		public InstallCard2() {
 			super(new SpringLayout());
 			SpringLayout layout = (SpringLayout) this.getLayout();
+			JPanel exp = new JPanel();
+			exp.setLayout(new BoxLayout(exp,BoxLayout.Y_AXIS));
+			JCheckBox checked = new JCheckBox("",true);
+			JCheckBox unchecked = new JCheckBox("",false);
 
 			inPath.setPreferredWidth(FIELD_WIDTH);
-			stFile.setPreferredWidth(FIELD_WIDTH);
+			dbInit.setPreferredWidth(FIELD_WIDTH);
+			dbInit.setExpanded(init,false);
+			dbInit.setIcon((init? checked:unchecked).getIcon());
+			dbInit.setContentMargin(12, 12, 12, 12);
 			stFile.setMultiSelectionEnabled(false);
 			stFile.setFilesDropEnabled(true);
 			stFile.setShowFileExtensions(true);
-			prFile.setPreferredWidth(FIELD_WIDTH);
 			prFile.setMultiSelectionEnabled(false);
 			prFile.setFilesDropEnabled(true);
 			prFile.setShowFileExtensions(true);
@@ -193,38 +206,44 @@ public class Installer extends JFrame {
 
 			this.add(pathText);
 			this.add(inPath);
-			this.add(init);
-			this.add(stText);
-			this.add(stFile);
-			this.add(prText);
-			this.add(prFile);
+			exp.add(stText);
+			exp.add(stFile);
+			exp.add(new JLabel("\n"));
+			exp.add(prText);
+			exp.add(prFile);
+			stText.setAlignmentX(Component.LEFT_ALIGNMENT);
+			stFile.setAlignmentX(Component.LEFT_ALIGNMENT);
+			prText.setAlignmentX(Component.LEFT_ALIGNMENT);
+			prFile.setAlignmentX(Component.LEFT_ALIGNMENT);
+			dbInit.setContent(exp);
+			this.add(dbInit);
 
-			layout.putConstraint(SpringLayout.VERTICAL_CENTER, init, 0, SpringLayout.VERTICAL_CENTER, this);
+			layout.putConstraint(SpringLayout.VERTICAL_CENTER, dbInit, 48, SpringLayout.VERTICAL_CENTER, this);
 
 			layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, inPath, 0, SpringLayout.HORIZONTAL_CENTER, this);
-			layout.putConstraint(SpringLayout.SOUTH, inPath, -96, SpringLayout.NORTH, init);
+			layout.putConstraint(SpringLayout.SOUTH, inPath, -48, SpringLayout.NORTH, dbInit);
 			layout.putConstraint(SpringLayout.WEST, pathText, 0, SpringLayout.WEST, inPath);
 			layout.putConstraint(SpringLayout.SOUTH, pathText, -12, SpringLayout.NORTH, inPath);
 
-			layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, stFile, 0, SpringLayout.HORIZONTAL_CENTER, this);
-			layout.putConstraint(SpringLayout.NORTH, stText, 24, SpringLayout.SOUTH, init);
-			layout.putConstraint(SpringLayout.WEST, stText, 0, SpringLayout.WEST, inPath);
-			layout.putConstraint(SpringLayout.NORTH, stFile, 12, SpringLayout.SOUTH, stText);
-
-			layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, prFile, 0, SpringLayout.HORIZONTAL_CENTER, this);
-			layout.putConstraint(SpringLayout.NORTH, prText, 24, SpringLayout.SOUTH, stFile);
-			layout.putConstraint(SpringLayout.WEST, prText, 0, SpringLayout.WEST, stFile);
-			layout.putConstraint(SpringLayout.NORTH, prFile, 12, SpringLayout.SOUTH, prText);
-
-			layout.putConstraint(SpringLayout.WEST, init, 0, SpringLayout.WEST, inPath);
+			layout.putConstraint(SpringLayout.WEST, dbInit, 0, SpringLayout.WEST, inPath);
 			
-			init.addChangeListener(e -> {
-				if (init.isSelected()) {
-					stFile.setEnabled(false);
-					prFile.setEnabled(false);
-				} else {
-					stFile.setEnabled(true);
-					prFile.setEnabled(true);
+			dbInit.addCollapsiblePaneListener(new CollapsiblePaneListener() {
+				@Override
+				public void collapsed(WebCollapsiblePane arg0) {}
+
+				@Override
+				public void collapsing(WebCollapsiblePane arg0) {
+					init = false;
+					dbInit.setIcon(unchecked.getIcon());
+				}
+
+				@Override
+				public void expanded(WebCollapsiblePane arg0) {}
+
+				@Override
+				public void expanding(WebCollapsiblePane arg0) {
+					init = true;
+					dbInit.setIcon(checked.getIcon());
 				}
 			});
 
@@ -268,7 +287,7 @@ public class Installer extends JFrame {
 		private JLabel text1 = new JLabel("The application is now being installed using the provided settings.");
 		private JLabel text2 = new JLabel("Please be patient, your RAMEN will be ready soon.");
 		private WebDecoratedImage image;
-		private WebProgressBar progress = new WebProgressBar();
+		private WebProgressBar progress = new WebProgressBar(0,100);
 	
 		public InstallCard3() {
 			super(new SpringLayout());
@@ -289,7 +308,7 @@ public class Installer extends JFrame {
 			progress.setPreferredWidth(PROGRESS_WIDTH);
 			progress.setIndeterminate(true);
 			progress.setStringPainted(true);
-			progress.setString("Installing RAMEN...");
+			//progress.setString("Installing RAMEN...");
 	
 			this.add(image);
 			this.add(text1);
@@ -308,10 +327,26 @@ public class Installer extends JFrame {
 			this.addAncestorListener(new AncestorListener() {
 				@Override
 				public void ancestorAdded(AncestorEvent event) {
+					PrintWriter pw = null;
 					try {
-						RAMEN.getInstance().install(path, files[0], files[1]);
+						if (init)
+							RAMEN.getInstance().install(path, files[0],
+									files[1]);
+						else {
+							pw = new PrintWriter(DAO.DB_WARD, "UTF-8");
+							pw.println(path);
+						}
+						progress.setIndeterminate(false);
+						for (byte i = 0; i < 101; i+=10) {
+							progress.setValue(i);
+							progress.update(progress.getGraphics());
+							Thread.sleep(100);
+						}
+						next.setEnabled(true);
 					} catch (Exception e) {
 						JOptionPane.showMessageDialog(frame, e);
+					} finally {
+						if (pw != null) pw.close();
 					}
 				}
 	
