@@ -3,15 +3,18 @@ package jp.ramen.gui;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.stream.Collectors;
+import java.util.HashMap;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
 
-import jp.ramen.RAMEN;
+import jp.ramen.*;
 
 import com.alee.extended.image.WebDecoratedImage;
 import com.alee.laf.WebLookAndFeel;
@@ -26,8 +29,8 @@ public class Main extends JFrame {
 
 	private static final long serialVersionUID = 1L;
 	
-	private static final int HEIGHT = 720;
-	private static final int WIDTH = 1280;
+	private static final int APP_HEIGHT = 720;
+	private static final int APP_WIDTH = 1280;
 	private static final int MIN_WIDTH = 420;
 	private static final int MIN_HEIGHT = 520;
 
@@ -38,7 +41,7 @@ public class Main extends JFrame {
 		WebLookAndFeel.install();
 		if (frame == null)
 			frame = new Main();
-		frame.setSize(WIDTH, HEIGHT);
+		frame.setSize(APP_WIDTH, APP_HEIGHT);
 		frame.setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
 		frame.setVisible(true);
 	};
@@ -127,33 +130,20 @@ public class Main extends JFrame {
 	private final class App extends JPanel {
 
 		private static final long serialVersionUID = 1L;
-
-		private static final int DIVIDER_LOCATION = 240;
 		
 		private WebToolBar bar = new WebToolBar(WebToolBar.HORIZONTAL);
-		private JTree tree = new JTree();
+		private JTree gTree;
+		DefaultTreeModel tree;
+		DefaultMutableTreeNode lobby = new DefaultMutableTreeNode("Main Lobby");
+		HashMap<Group, MutableTreeNode> groups = new HashMap<>();
+		DefaultMutableTreeNode people = new DefaultMutableTreeNode("People");
 		private WebSplitPane splitPane;
-		private WebTable inbox;
-		private JPanel details = new JPanel();
+		DefaultTableModel table;
+		private WebTable topPane;
+		private JPanel botPane = new JPanel();
 		
 		public App() {
 			super(new BorderLayout());
-			
-			String[] headers = {
-					"Read",
-					"Date",
-					"Group",
-					"Author",
-					"Subject"
-			};
-			DefaultTableModel model = new DefaultTableModel(headers,0);
-			inbox = new WebTable(model);
-			inbox.setEditable(false);
-			
-			splitPane = new WebSplitPane(WebSplitPane.VERTICAL_SPLIT, new JScrollPane(inbox), details);
-			splitPane.setOneTouchExpandable(true);
-			splitPane.setDividerLocation(DIVIDER_LOCATION);
-			splitPane.setContinuousLayout(true);
 			
 			bar.setToolbarStyle(ToolbarStyle.attached);
 			bar.setFloatable(false);
@@ -161,16 +151,49 @@ public class Main extends JFrame {
 			bar.add(new JButton("Is"));
 			bar.add(new JButton("A"));
 			bar.add(new JButton("Test"));
+			
+			DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+			tree = new DefaultTreeModel(root);
+			tree.insertNodeInto(lobby, root, 0);
+			tree.insertNodeInto(people, root, 1);
+			gTree = new JTree(tree);
+			gTree.setRootVisible(false);
+			gTree.setPreferredSize(new Dimension(APP_WIDTH/5,APP_HEIGHT));
+
+			String[] headers = {
+					"Read",
+					"Date",
+					"Group",
+					"Author",
+					"Subject"
+			};
+			table = new DefaultTableModel(headers,0);
+			topPane = new WebTable(table);
+			topPane.setEditable(false);
+			
+			splitPane = new WebSplitPane(WebSplitPane.VERTICAL_SPLIT, new JScrollPane(topPane), botPane);
+			splitPane.setOneTouchExpandable(true);
+			splitPane.setDividerLocation(APP_HEIGHT/3);
+			splitPane.setContinuousLayout(true);
 	
 			this.add(bar, BorderLayout.NORTH);
-			this.add(tree, BorderLayout.WEST);
+			this.add(new JScrollPane(gTree), BorderLayout.WEST);
 			this.add(splitPane, BorderLayout.CENTER);
 			
 			this.addAncestorListener(new AncestorListener() {
 				@Override
 				public void ancestorAdded(AncestorEvent event) {
-					java.util.List<Object[]> data;
-					data = app.listInbox().stream().map((lm) -> {
+					for (Group g : app.listGroups()) {
+						MutableTreeNode supernode = g.getSupergroup() == null ?
+								lobby : groups.get(g.getSupergroup());
+						DefaultMutableTreeNode node = new DefaultMutableTreeNode(g.getName());
+						tree.insertNodeInto(node, supernode, supernode.getChildCount());
+						groups.put(g, node);
+					}
+					for (int i = 0; i < gTree.getRowCount(); i++)
+						gTree.expandRow(i);
+					
+					app.listInbox().stream().map((lm) -> {
 						return new Object[] {
 								lm.isRead(),
 								lm.getReference().getTime().toString(),
@@ -178,9 +201,9 @@ public class Main extends JFrame {
 								lm.getReference().getAuthor().getName(),
 								lm.getReference().getSubject()
 						};
-					}).collect(Collectors.toList());
-					for (Object[] d :data)
-						model.addRow(d);
+					}).forEach((entry) -> {
+						table.addRow(entry);
+					});
 				}
 				@Override
 				public void ancestorRemoved(AncestorEvent event) {}
