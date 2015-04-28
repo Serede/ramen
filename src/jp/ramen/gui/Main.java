@@ -162,7 +162,8 @@ public class Main extends JFrame {
 		private WebTextField search = new WebTextField(SEARCH_WIDTH);
 		private JTree gTree;
 		DefaultTreeModel tree;
-		gTreeNode lobby = new gTreeNode("Main Lobby");
+		gTreeNode home = new gTreeNode("Home");
+		gTreeNode pm = new gTreeNode("Inbox");
 		gTreeNode people = new gTreeNode("People");
 		HashMap<Group, gTreeNode> groups = new HashMap<>();
 		private JPanel center = new JPanel(new CardLayout());
@@ -193,8 +194,9 @@ public class Main extends JFrame {
 			
 			DefaultMutableTreeNode root = new DefaultMutableTreeNode();
 			tree = new DefaultTreeModel(root);
-			tree.insertNodeInto(lobby, root, 0);
-			tree.insertNodeInto(people, root, 1);
+			tree.insertNodeInto(home, root, 0);
+			tree.insertNodeInto(pm, root, 1);
+			tree.insertNodeInto(people, root, 2);
 			gTree = new JTree(tree);
 			gTree.setRootVisible(false);
 			gTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -245,15 +247,24 @@ public class Main extends JFrame {
 				gTreeNode node = (gTreeNode) gTree.getLastSelectedPathComponent();
 				if(node == null) return;
 				
-				if (node.equals(lobby)) {
+				if (node.equals(home)) {
 					clayout.first(center);
-					fetchInbox((lm) -> !lm.equals(null));
+					fetchInbox((lm) -> lm.getReference().getTo() instanceof Group);
 					createGroup.setEnabled(true);
 					joinGroup.setEnabled(false);
 					leaveGroup.setEnabled(false);
 					block.setEnabled(false);
-					target = users.get(0);
-					
+										
+					return;
+				}
+				if (node.equals(pm)) {
+					clayout.first(center);
+					fetchInbox((lm) -> lm.getReference().getTo().equals(app.getCurrentUser()));
+					createGroup.setEnabled(false);
+					joinGroup.setEnabled(false);
+					leaveGroup.setEnabled(false);
+					block.setEnabled(false);
+
 					return;
 				}
 				if (node.equals(people)) {
@@ -292,7 +303,7 @@ public class Main extends JFrame {
 				public void ancestorAdded(AncestorEvent event) {
 					fetchGroups();
 					fetchUsers();
-					gTree.setSelectionPath(new TreePath(lobby.getPath()));
+					gTree.setSelectionPath(new TreePath(home.getPath()));
 				}
 				@Override
 				public void ancestorRemoved(AncestorEvent event) {}
@@ -406,9 +417,9 @@ public class Main extends JFrame {
 		}
 		
 		private void fetchGroups() {
-			lobby.removeAllChildren();
+			home.removeAllChildren();
 			for (Group g : app.listGroups()) {
-				gTreeNode supernode = g.getSupergroup() == null ? lobby
+				gTreeNode supernode = g.getSupergroup() == null ? home
 						: groups.get(g.getSupergroup());
 				gTreeNode node = new gTreeNode(g);
 				tree.insertNodeInto(node, supernode, supernode.getChildCount());
