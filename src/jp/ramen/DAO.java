@@ -91,7 +91,7 @@ public class DAO {
 				throw new DbAlreadyExists();
 			} else {
 				pw = new PrintWriter(DB_WARD,"UTF-8");
-				pw.println(DB_URL);
+				pw.println(db);
 				pw.close();
 				c = DriverManager.getConnection(DB_URL + ";INIT=" + DB_INIT,
 						DB_USER, DB_PASS);

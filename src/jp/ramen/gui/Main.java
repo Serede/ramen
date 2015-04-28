@@ -19,6 +19,7 @@ import javax.swing.tree.TreeSelectionModel;
 import jp.ramen.*;
 
 import com.alee.extended.image.WebDecoratedImage;
+import com.alee.extended.panel.WebButtonGroup;
 import com.alee.laf.WebLookAndFeel;
 import com.alee.laf.splitpane.WebSplitPane;
 import com.alee.laf.table.WebTable;
@@ -150,10 +151,13 @@ public class Main extends JFrame {
 		private static final long serialVersionUID = 1L;
 		private static final int READ_WIDTH = 64;
 		private static final int SEARCH_WIDTH = 16;
-		private static final int BAR_HEIGHT = 32;
 		
-		private WebToolBar bar = new WebToolBar(WebToolBar.HORIZONTAL);
-		private JButton sendMessage = new JButton("Send message");
+		private ToolBar bar = new ToolBar(JToolBar.HORIZONTAL);
+		private JButton newMessage = new JButton("New message");
+		private JButton newGroup = new JButton("New group");
+		private JButton joinGroup = new JButton("Join group");
+		private JButton leaveGroup = new JButton("Leave group");
+		private JButton blockGroup = new JButton("Block group");
 		private WebTextField search = new WebTextField(SEARCH_WIDTH);
 		private JTree gTree;
 		DefaultTreeModel tree;
@@ -176,16 +180,11 @@ public class Main extends JFrame {
 			search.setHideInputPromptOnFocus(false);
 
 			bar.setToolbarStyle(ToolbarStyle.attached);
-			bar.setPreferredHeight(BAR_HEIGHT);
 			bar.setFloatable(false);
-			SpringLayout barLayout = new SpringLayout();
-			bar.setLayout(barLayout);
-			bar.add(sendMessage);
-			bar.add(search);
-			barLayout.putConstraint(SpringLayout.WEST, sendMessage, 0, SpringLayout.WEST, bar);
-			barLayout.putConstraint(SpringLayout.VERTICAL_CENTER, sendMessage, 0, SpringLayout.VERTICAL_CENTER, bar);
-			barLayout.putConstraint(SpringLayout.EAST, search, 0, SpringLayout.EAST, bar);
-			barLayout.putConstraint(SpringLayout.VERTICAL_CENTER, search, 0, SpringLayout.VERTICAL_CENTER, bar);
+			WebButtonGroup leftButtons = new WebButtonGroup(true, newMessage, newGroup, joinGroup, leaveGroup, blockGroup);
+			leftButtons.setButtonsDrawFocus(false);
+			bar.leftAdd(leftButtons);
+			bar.rightAdd(search);
 			
 			DefaultMutableTreeNode root = new DefaultMutableTreeNode();
 			tree = new DefaultTreeModel(root);
@@ -300,6 +299,45 @@ public class Main extends JFrame {
 			@Override
 			public Class<?> getColumnClass(int columnIndex) {
 				return getValueAt(0, columnIndex).getClass();
+			}
+		}
+		
+		private class ToolBar extends WebToolBar {
+			private static final long serialVersionUID = 1L;
+			private static final int BAR_HEIGHT = 32;
+			private SpringLayout layout = new SpringLayout();
+			private Component lastLeft = null;
+			private Component lastRight = null;
+			
+			public ToolBar(int orientation) {
+				super(orientation);
+				this.setLayout(layout);
+				this.setPreferredHeight(BAR_HEIGHT);
+			}
+			
+			public void leftAdd(Component comp) {
+				super.add(comp);
+				if (lastLeft == null)
+					layout.putConstraint(SpringLayout.WEST, comp, 0, SpringLayout.WEST, this);
+				else
+					layout.putConstraint(SpringLayout.WEST, comp, 0, SpringLayout.EAST, lastLeft);
+				layout.putConstraint(SpringLayout.VERTICAL_CENTER, comp, 0, SpringLayout.VERTICAL_CENTER, this);
+				lastLeft = comp;
+			}
+			
+			public void rightAdd(Component comp) {
+				super.add(comp);
+				if (lastRight == null)
+					layout.putConstraint(SpringLayout.EAST, comp, 0, SpringLayout.EAST, this);
+				else
+					layout.putConstraint(SpringLayout.EAST, comp, 0, SpringLayout.WEST, lastRight);
+				layout.putConstraint(SpringLayout.VERTICAL_CENTER, comp, 0, SpringLayout.VERTICAL_CENTER, this);
+				lastRight = comp;
+			}
+			
+			@Override
+			public void setLayout(LayoutManager mgr) {
+				super.setLayout(layout);
 			}
 		}
 		
