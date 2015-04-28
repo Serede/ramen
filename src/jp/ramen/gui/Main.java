@@ -14,6 +14,7 @@ import javax.swing.event.AncestorListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
 import jp.ramen.*;
@@ -154,10 +155,10 @@ public class Main extends JFrame {
 		
 		private ToolBar bar = new ToolBar(JToolBar.HORIZONTAL);
 		private JButton newMessage = new JButton("New message");
-		private JButton newGroup = new JButton("New group");
+		private JButton createGroup = new JButton("Create group");
 		private JButton joinGroup = new JButton("Join group");
 		private JButton leaveGroup = new JButton("Leave group");
-		private JButton blockGroup = new JButton("Block group");
+		private JButton block = new JButton("Block");
 		private WebTextField search = new WebTextField(SEARCH_WIDTH);
 		private JTree gTree;
 		DefaultTreeModel tree;
@@ -172,6 +173,8 @@ public class Main extends JFrame {
 		private DetailsPanel botPane = new DetailsPanel();
 		private WebTable fullPane;
 		DefaultTableModel uTable;
+		HashMap<Integer, User> users = new HashMap<>();
+		private Entity target = null;
 		
 		public App() {
 			super(new BorderLayout());
@@ -181,9 +184,11 @@ public class Main extends JFrame {
 
 			bar.setToolbarStyle(ToolbarStyle.attached);
 			bar.setFloatable(false);
-			WebButtonGroup leftButtons = new WebButtonGroup(true, newMessage, newGroup, joinGroup, leaveGroup, blockGroup);
-			leftButtons.setButtonsDrawFocus(false);
-			bar.leftAdd(leftButtons);
+			WebButtonGroup groupButtons = new WebButtonGroup(true, createGroup, joinGroup, leaveGroup);
+			groupButtons.setButtonsDrawFocus(false);
+			bar.leftAdd(newMessage);
+			bar.leftAdd(groupButtons);
+			bar.leftAdd(block);
 			bar.rightAdd(search);
 			
 			DefaultMutableTreeNode root = new DefaultMutableTreeNode();
@@ -193,7 +198,7 @@ public class Main extends JFrame {
 			gTree = new JTree(tree);
 			gTree.setRootVisible(false);
 			gTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-			gTree.setPreferredSize(new Dimension(APP_WIDTH/5,APP_HEIGHT));
+			gTree.setPreferredSize(new Dimension(APP_WIDTH/5,0));
 
 			String[] iHeaders = {
 					"Read",
@@ -225,6 +230,16 @@ public class Main extends JFrame {
 			this.add(new JScrollPane(gTree), BorderLayout.WEST);
 			this.add(center, BorderLayout.CENTER);
 			
+			newMessage.addActionListener((e) -> {
+				MessageWindow mw;
+				try {
+					mw = new MessageWindow(frame, target);
+					mw.setVisible(true);
+				} catch (Exception ex) {
+					JOptionPane.showMessageDialog(this, ex, "Warning", JOptionPane.WARNING_MESSAGE);
+				}
+			});
+			
 			gTree.addTreeSelectionListener((e) -> {
 				CardLayout clayout = (CardLayout) center.getLayout();
 				gTreeNode node = (gTreeNode) gTree.getLastSelectedPathComponent();
@@ -233,11 +248,23 @@ public class Main extends JFrame {
 				if (node.equals(lobby)) {
 					clayout.first(center);
 					fetchInbox((lm) -> !lm.equals(null));
+					createGroup.setEnabled(true);
+					joinGroup.setEnabled(false);
+					leaveGroup.setEnabled(false);
+					block.setEnabled(false);
+					target = users.get(0);
+					
 					return;
 				}
 				if (node.equals(people)) {
 					clayout.next(center);
 					fetchInbox((lm) -> !lm.equals(null));
+					createGroup.setEnabled(false);
+					joinGroup.setEnabled(false);
+					leaveGroup.setEnabled(false);
+					block.setEnabled(true);
+					fullPane.setSelectedRow(0);
+
 					return;
 				}
 				
@@ -245,6 +272,12 @@ public class Main extends JFrame {
 				if (info instanceof Group) {
 					clayout.first(center);
 					fetchInbox((lm) -> lm.getReference().getTo().equals(info));
+					createGroup.setEnabled(true);
+					joinGroup.setEnabled(true);
+					leaveGroup.setEnabled(true);
+					block.setEnabled(true);
+					target = (Group) info;
+					
 					return;
 				}
 				
@@ -258,8 +291,8 @@ public class Main extends JFrame {
 				@Override
 				public void ancestorAdded(AncestorEvent event) {
 					fetchGroups();
-					fetchInbox((lm) -> !lm.equals(null));
 					fetchUsers();
+					gTree.setSelectionPath(new TreePath(lobby.getPath()));
 				}
 				@Override
 				public void ancestorRemoved(AncestorEvent event) {}
@@ -305,6 +338,7 @@ public class Main extends JFrame {
 		private class ToolBar extends WebToolBar {
 			private static final long serialVersionUID = 1L;
 			private static final int BAR_HEIGHT = 32;
+			private static final int HSPACE = 6;
 			private SpringLayout layout = new SpringLayout();
 			private Component lastLeft = null;
 			private Component lastRight = null;
@@ -320,7 +354,7 @@ public class Main extends JFrame {
 				if (lastLeft == null)
 					layout.putConstraint(SpringLayout.WEST, comp, 0, SpringLayout.WEST, this);
 				else
-					layout.putConstraint(SpringLayout.WEST, comp, 0, SpringLayout.EAST, lastLeft);
+					layout.putConstraint(SpringLayout.WEST, comp, HSPACE, SpringLayout.EAST, lastLeft);
 				layout.putConstraint(SpringLayout.VERTICAL_CENTER, comp, 0, SpringLayout.VERTICAL_CENTER, this);
 				lastLeft = comp;
 			}
@@ -330,7 +364,7 @@ public class Main extends JFrame {
 				if (lastRight == null)
 					layout.putConstraint(SpringLayout.EAST, comp, 0, SpringLayout.EAST, this);
 				else
-					layout.putConstraint(SpringLayout.EAST, comp, 0, SpringLayout.WEST, lastRight);
+					layout.putConstraint(SpringLayout.EAST, comp, -HSPACE, SpringLayout.WEST, lastRight);
 				layout.putConstraint(SpringLayout.VERTICAL_CENTER, comp, 0, SpringLayout.VERTICAL_CENTER, this);
 				lastRight = comp;
 			}
@@ -346,21 +380,22 @@ public class Main extends JFrame {
 			
 			public JButton reply = new JButton("Reply");
 			public JButton remove = new JButton("Remove");
+			public JButton review = new JButton("Review");
 			public JButton block = new JButton("Block user");
 			private JTextArea text = new JTextArea();
 			
 			public DetailsPanel() {
 				super(new BorderLayout());
 				JScrollPane scroll = new JScrollPane(text);
-				JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+				JPanel bPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+				WebButtonGroup msgButtons = new WebButtonGroup(true, reply, remove, review);
 				
 				text.setEditable(false);
 				
-				buttons.add(reply);
-				buttons.add(remove);
-				buttons.add(block);
+				bPanel.add(msgButtons);
+				bPanel.add(block);
 				
-				this.add(buttons, BorderLayout.NORTH);
+				this.add(bPanel, BorderLayout.NORTH);
 				this.add(scroll, BorderLayout.CENTER);
 			}
 			
@@ -412,13 +447,12 @@ public class Main extends JFrame {
 			int rows = uTable.getRowCount();
 			for (int i = rows-1; i>=0; i--)
 				uTable.removeRow(i);
-			app.listUsers()
-					.stream()
-					.map((u) -> {
-						return new Object[] { u.getName() };
-					}).forEach((entry) -> {
-						uTable.addRow(entry);
-					});
+			app.listUsers().stream().map((u) -> {
+				return new Object[] { u, new Object[] { u.getName() } };
+			}).forEach((entry) -> {
+				uTable.addRow((Object[]) entry[1]);
+				users.put(uTable.getRowCount() - 1, (User) entry[0]);
+			});
 		}
 	}
 
