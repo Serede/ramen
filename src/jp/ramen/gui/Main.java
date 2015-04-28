@@ -149,8 +149,12 @@ public class Main extends JFrame {
 
 		private static final long serialVersionUID = 1L;
 		private static final int READ_WIDTH = 64;
+		private static final int SEARCH_WIDTH = 16;
+		private static final int BAR_HEIGHT = 32;
 		
 		private WebToolBar bar = new WebToolBar(WebToolBar.HORIZONTAL);
+		private JButton sendMessage = new JButton("Send message");
+		private WebTextField search = new WebTextField(SEARCH_WIDTH);
 		private JTree gTree;
 		DefaultTreeModel tree;
 		gTreeNode lobby = new gTreeNode("Main Lobby");
@@ -168,12 +172,20 @@ public class Main extends JFrame {
 		public App() {
 			super(new BorderLayout());
 			
+			search.setInputPrompt("Search...");
+			search.setHideInputPromptOnFocus(false);
+
 			bar.setToolbarStyle(ToolbarStyle.attached);
+			bar.setPreferredHeight(BAR_HEIGHT);
 			bar.setFloatable(false);
-			bar.add(new JButton("This"));
-			bar.add(new JButton("Is"));
-			bar.add(new JButton("A"));
-			bar.add(new JButton("Test"));
+			SpringLayout barLayout = new SpringLayout();
+			bar.setLayout(barLayout);
+			bar.add(sendMessage);
+			bar.add(search);
+			barLayout.putConstraint(SpringLayout.WEST, sendMessage, 0, SpringLayout.WEST, bar);
+			barLayout.putConstraint(SpringLayout.VERTICAL_CENTER, sendMessage, 0, SpringLayout.VERTICAL_CENTER, bar);
+			barLayout.putConstraint(SpringLayout.EAST, search, 0, SpringLayout.EAST, bar);
+			barLayout.putConstraint(SpringLayout.VERTICAL_CENTER, search, 0, SpringLayout.VERTICAL_CENTER, bar);
 			
 			DefaultMutableTreeNode root = new DefaultMutableTreeNode();
 			tree = new DefaultTreeModel(root);
@@ -213,7 +225,7 @@ public class Main extends JFrame {
 			this.add(bar, BorderLayout.NORTH);
 			this.add(new JScrollPane(gTree), BorderLayout.WEST);
 			this.add(center, BorderLayout.CENTER);
-
+			
 			gTree.addTreeSelectionListener((e) -> {
 				CardLayout clayout = (CardLayout) center.getLayout();
 				gTreeNode node = (gTreeNode) gTree.getLastSelectedPathComponent();
@@ -294,19 +306,24 @@ public class Main extends JFrame {
 		private class DetailsPanel extends JPanel {
 			private static final long serialVersionUID = 1L;
 			
+			public JButton reply = new JButton("Reply");
+			public JButton remove = new JButton("Remove");
+			public JButton block = new JButton("Block user");
 			private JTextArea text = new JTextArea();
 			
 			public DetailsPanel() {
-				super(new SpringLayout());
-				SpringLayout layout = (SpringLayout) this.getLayout();
+				super(new BorderLayout());
 				JScrollPane scroll = new JScrollPane(text);
+				JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+				
 				text.setEditable(false);
 				
-				this.add(scroll);
-				layout.putConstraint(SpringLayout.NORTH, scroll, 12, SpringLayout.NORTH, this);
-				layout.putConstraint(SpringLayout.WEST, scroll, 12, SpringLayout.WEST, this);
-				layout.putConstraint(SpringLayout.SOUTH, scroll, -12, SpringLayout.SOUTH, this);
-				layout.putConstraint(SpringLayout.EAST, scroll, -12, SpringLayout.EAST, this);
+				buttons.add(reply);
+				buttons.add(remove);
+				buttons.add(block);
+				
+				this.add(buttons, BorderLayout.NORTH);
+				this.add(scroll, BorderLayout.CENTER);
 			}
 			
 			public void setText(String text) {

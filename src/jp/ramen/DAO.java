@@ -119,7 +119,7 @@ public class DAO {
 				String path;
 				buf = new BufferedReader(new InputStreamReader(new FileInputStream(DB_WARD)));
 				if((path = buf.readLine()) != null) {
-					DB_URL = path;
+					DB_URL = "jdbc:h2:" + path + "/" + DB_NAME;
 					c = DriverManager.getConnection(DB_URL + ";IFEXISTS=TRUE",
 							DB_USER, DB_PASS);
 					udb.load();
