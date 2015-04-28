@@ -1,9 +1,11 @@
 package jp.ramen.gui;
 
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.function.Predicate;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -12,7 +14,7 @@ import javax.swing.event.AncestorListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeSelectionModel;
 
 import jp.ramen.*;
 
@@ -33,8 +35,12 @@ public class Main extends JFrame {
 	private static final int APP_WIDTH = 1280;
 	private static final int MIN_WIDTH = 420;
 	private static final int MIN_HEIGHT = 520;
+	private static final String ICON = "img/ramen_digital_ver__by_kokororhythm-d6radm5.png";
+	private static final int ICON_HEIGHT = 512;
+	private static final int ICON_WIDTH = 512;
 
 	private static Main frame = null;
+	private Image icon;
 	private static RAMEN app = RAMEN.getInstance();
 	
 	public static Runnable run = () -> {
@@ -55,6 +61,15 @@ public class Main extends JFrame {
 		pane.add(new Login());
 		pane.add(new App());
 		
+		ImageIcon img;
+		try {
+			img = new ImageIcon(ImageIO.read(new File(ICON)));
+			img.setImage(img.getImage().getScaledInstance(ICON_WIDTH,
+					ICON_HEIGHT, Image.SCALE_SMOOTH));
+			icon = img.getImage();
+			setIconImage(icon);
+		} catch (IOException ignore) {}
+
 		try {
 			app.init();
 		} catch (Exception e) {
@@ -115,14 +130,17 @@ public class Main extends JFrame {
 			layout.putConstraint(SpringLayout.EAST, login, 0, SpringLayout.EAST, pass);
 			layout.putConstraint(SpringLayout.WEST, badLogin, 0, SpringLayout.WEST, pass);
 			
-			login.addActionListener(e -> {
+			ActionListener al = (e) -> {
 				if(app.login(user.getText(), new String(pass.getPassword()))) {
 					CardLayout clayout = (CardLayout) frame.getContentPane().getLayout();
 					clayout.next(frame.getContentPane());
 				} else {
 					badLogin.setVisible(true);
 				}
-			});
+			};
+			user.addActionListener(al);
+			pass.addActionListener(al);
+			login.addActionListener(al);
 		}
 		
 	}
@@ -130,17 +148,22 @@ public class Main extends JFrame {
 	private final class App extends JPanel {
 
 		private static final long serialVersionUID = 1L;
+		private static final int READ_WIDTH = 64;
 		
 		private WebToolBar bar = new WebToolBar(WebToolBar.HORIZONTAL);
 		private JTree gTree;
 		DefaultTreeModel tree;
-		DefaultMutableTreeNode lobby = new DefaultMutableTreeNode("Main Lobby");
-		HashMap<Group, MutableTreeNode> groups = new HashMap<>();
-		DefaultMutableTreeNode people = new DefaultMutableTreeNode("People");
+		gTreeNode lobby = new gTreeNode("Main Lobby");
+		gTreeNode people = new gTreeNode("People");
+		HashMap<Group, gTreeNode> groups = new HashMap<>();
+		private JPanel center = new JPanel(new CardLayout());
 		private WebSplitPane splitPane;
-		DefaultTableModel table;
-		private WebTable topPane;
-		private JPanel botPane = new JPanel();
+		private JTable topPane;
+		iModel iTable;
+		HashMap<Integer, LocalMessage> inbox = new HashMap<>();
+		private DetailsPanel botPane = new DetailsPanel();
+		private WebTable fullPane;
+		DefaultTableModel uTable;
 		
 		public App() {
 			super(new BorderLayout());
@@ -158,52 +181,74 @@ public class Main extends JFrame {
 			tree.insertNodeInto(people, root, 1);
 			gTree = new JTree(tree);
 			gTree.setRootVisible(false);
+			gTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 			gTree.setPreferredSize(new Dimension(APP_WIDTH/5,APP_HEIGHT));
 
-			String[] headers = {
+			String[] iHeaders = {
 					"Read",
 					"Date",
-					"Group",
+					"To",
 					"Author",
 					"Subject"
 			};
-			table = new DefaultTableModel(headers,0);
-			topPane = new WebTable(table);
-			topPane.setEditable(false);
+			iTable = new iModel(iHeaders,0);
+			topPane = new WebTable(iTable);
+			topPane.getColumnModel().getColumn(0).setMaxWidth(READ_WIDTH);
 			
 			splitPane = new WebSplitPane(WebSplitPane.VERTICAL_SPLIT, new JScrollPane(topPane), botPane);
 			splitPane.setOneTouchExpandable(true);
 			splitPane.setDividerLocation(APP_HEIGHT/3);
 			splitPane.setContinuousLayout(true);
+			
+			String[] uHeaders = {
+					"User"
+			};
+			uTable = new DefaultTableModel(uHeaders,0);
+			fullPane = new WebTable(uTable);
+			fullPane.setEditable(false);
+			
+			center.add(splitPane);
+			center.add(new JScrollPane(fullPane));
 	
 			this.add(bar, BorderLayout.NORTH);
 			this.add(new JScrollPane(gTree), BorderLayout.WEST);
-			this.add(splitPane, BorderLayout.CENTER);
+			this.add(center, BorderLayout.CENTER);
+
+			gTree.addTreeSelectionListener((e) -> {
+				CardLayout clayout = (CardLayout) center.getLayout();
+				gTreeNode node = (gTreeNode) gTree.getLastSelectedPathComponent();
+				if(node == null) return;
+				
+				if (node.equals(lobby)) {
+					clayout.first(center);
+					fetchInbox((lm) -> !lm.equals(null));
+					return;
+				}
+				if (node.equals(people)) {
+					clayout.next(center);
+					fetchInbox((lm) -> !lm.equals(null));
+					return;
+				}
+				
+				Object info = node.getUserObject();
+				if (info instanceof Group) {
+					clayout.first(center);
+					fetchInbox((lm) -> lm.getReference().getTo().equals(info));
+					return;
+				}
+				
+			});
+			
+			topPane.getSelectionModel().addListSelectionListener((e) -> {
+				botPane.setText(inbox.get(topPane.getSelectedRow()).getReference().getText());
+			});
 			
 			this.addAncestorListener(new AncestorListener() {
 				@Override
 				public void ancestorAdded(AncestorEvent event) {
-					for (Group g : app.listGroups()) {
-						MutableTreeNode supernode = g.getSupergroup() == null ?
-								lobby : groups.get(g.getSupergroup());
-						DefaultMutableTreeNode node = new DefaultMutableTreeNode(g.getName());
-						tree.insertNodeInto(node, supernode, supernode.getChildCount());
-						groups.put(g, node);
-					}
-					for (int i = 0; i < gTree.getRowCount(); i++)
-						gTree.expandRow(i);
-					
-					app.listInbox().stream().map((lm) -> {
-						return new Object[] {
-								lm.isRead(),
-								lm.getReference().getTime().toString(),
-								lm.getReference().getTo().getName(),
-								lm.getReference().getAuthor().getName(),
-								lm.getReference().getSubject()
-						};
-					}).forEach((entry) -> {
-						table.addRow(entry);
-					});
+					fetchGroups();
+					fetchInbox((lm) -> !lm.equals(null));
+					fetchUsers();
 				}
 				@Override
 				public void ancestorRemoved(AncestorEvent event) {}
@@ -212,6 +257,114 @@ public class Main extends JFrame {
 			});
 		}
 		
+		private class gTreeNode extends DefaultMutableTreeNode {
+			private static final long serialVersionUID = 1L;
+
+			public gTreeNode(Object info) {
+				super(info);
+			}
+
+			@Override
+			public String toString() {
+				Object info = super.getUserObject();
+				if (info instanceof Group)
+					return ((Group) info).getName();
+				return super.toString();
+			}
+		}	
+		
+		private class iModel extends DefaultTableModel {
+			private static final long serialVersionUID = 1L;
+
+			public iModel(String[] columnNames, int rowCount) {
+				super(columnNames, rowCount);
+			}
+
+			@Override
+			public boolean isCellEditable (int row, int col) {
+				return col==0;
+			}
+			
+			@Override
+			public Class<?> getColumnClass(int columnIndex) {
+				return getValueAt(0, columnIndex).getClass();
+			}
+		}
+		
+		private class DetailsPanel extends JPanel {
+			private static final long serialVersionUID = 1L;
+			
+			private JTextArea text = new JTextArea();
+			
+			public DetailsPanel() {
+				super(new SpringLayout());
+				SpringLayout layout = (SpringLayout) this.getLayout();
+				JScrollPane scroll = new JScrollPane(text);
+				text.setEditable(false);
+				
+				this.add(scroll);
+				layout.putConstraint(SpringLayout.NORTH, scroll, 12, SpringLayout.NORTH, this);
+				layout.putConstraint(SpringLayout.WEST, scroll, 12, SpringLayout.WEST, this);
+				layout.putConstraint(SpringLayout.SOUTH, scroll, -12, SpringLayout.SOUTH, this);
+				layout.putConstraint(SpringLayout.EAST, scroll, -12, SpringLayout.EAST, this);
+			}
+			
+			public void setText(String text) {
+				this.text.setText(text);
+			}
+			
+		}
+		
+		private void fetchGroups() {
+			lobby.removeAllChildren();
+			for (Group g : app.listGroups()) {
+				gTreeNode supernode = g.getSupergroup() == null ? lobby
+						: groups.get(g.getSupergroup());
+				gTreeNode node = new gTreeNode(g);
+				tree.insertNodeInto(node, supernode, supernode.getChildCount());
+				groups.put(g, node);
+			}
+			for (int i = 0; i < gTree.getRowCount(); i++)
+				gTree.expandRow(i);
+		}
+
+		private void fetchInbox(Predicate<LocalMessage> constraint) {
+			int rows = iTable.getRowCount();
+			for (int i = rows-1; i>=0; i--)
+				iTable.removeRow(i);
+			app.listInbox()
+					.stream()
+					.filter(constraint)
+					.map((lm) -> {
+						return new Object[] {
+								lm,
+								new Object[] {
+										lm.isRead(),
+										lm.getReference().getTime().getTime().toString(),
+										lm.getReference().getTo().getName(),
+										lm.getReference().getAuthor().getName(),
+										lm.getReference().getSubject()
+										}
+								};
+					})
+					.forEach((entry) -> {
+								iTable.addRow((Object[]) entry[1]);
+								inbox.put(iTable.getRowCount() - 1, (LocalMessage) entry[0]);
+							});
+		}
+		
+		private void fetchUsers() {
+			int rows = uTable.getRowCount();
+			for (int i = rows-1; i>=0; i--)
+				uTable.removeRow(i);
+			app.listUsers()
+					.stream()
+					.map((u) -> {
+						return new Object[] { u.getName() };
+					}).forEach((entry) -> {
+						uTable.addRow(entry);
+					});
+		}
 	}
 
 }
