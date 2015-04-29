@@ -155,7 +155,7 @@ public class MessageWindow extends JDialog{
 		
 		box.setLayout(layout);
 		
-		cancel.addActionListener(a -> frame.dispose());
+		cancel.addActionListener(a -> this.dispose());
 		
 		send.addActionListener(a -> {
 			Entity e = group.isSelected()?app.getDAO().getGdb().getGroup((String)list.getSelectedItem()):app.getDAO().getUdb().getUser((String)list.getSelectedItem());
@@ -166,7 +166,7 @@ public class MessageWindow extends JDialog{
 				JOptionPane.showMessageDialog(frame, e1.toString(), "Error", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-			frame.dispose();
+			this.dispose();
 		});
 	}
 }
