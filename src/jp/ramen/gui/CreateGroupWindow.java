@@ -87,10 +87,12 @@ public class CreateGroupWindow extends JDialog {
 		this.frame = this;
 		this.setSize(WIDTH,HEIGHT);
 		this.setMinimumSize(new Dimension(WIDTH, HEIGHT));
-		
+		String code;
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		this.setLayout(new BorderLayout());
 		
+		if(supergroup != null) code = supergroup.getCode();
+		else code = "NONE";
 		JPanel buttons = new JPanel();
 		FlowLayout buttonsLayout = new FlowLayout(FlowLayout.RIGHT);
 		buttons.setLayout(buttonsLayout);
@@ -108,6 +110,7 @@ public class CreateGroupWindow extends JDialog {
 		
 		mlist.addElement("NONE");
 		app.listGroups().stream().map(Group::getCode).forEach(g ->mlist.addElement(g) );
+		mlist.setSelectedItem(code);
 		list = new JComboBox<String>(mlist);
 		list.setPreferredSize(new Dimension(150, 30));
 		radioButtons.setLayout(new BoxLayout(radioButtons,BoxLayout.Y_AXIS));
