@@ -163,7 +163,7 @@ public class MessageWindow extends JDialog{
 				app.sendMessage(e,
 				subjtf.getText(), texttf.getText(), false);
 			} catch (Exception e1) {
-				JOptionPane.showMessageDialog(frame, e1.toString(), "Error", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(this, e1.toString(), "Error", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
 			this.dispose();
