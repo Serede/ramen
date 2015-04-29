@@ -291,9 +291,8 @@ public class GroupDAO { //TODO does not extend
 			stmt = db.createStatement();
 			String delete_member = "DELETE FROM G_MEMBERS WHERE "
 					+ "GID=" + gdb.getID(g)
-					+ "AND"
-					+ "MEMB=" + udb.getID(u)
-					+ ")";
+					+ " AND "
+					+ "MEMB=" + udb.getID(u);
 			stmt.executeUpdate(delete_member);
 			
 			if(g.delMember(u)==false) return false;

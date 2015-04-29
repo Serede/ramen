@@ -198,9 +198,9 @@ public class CreateGroupWindow extends JDialog {
 						desctf.getText(),
 						superg, social.isSelected(), _private.isSelected(), moderated.isSelected() );
 			} catch (Exception e) {
-				JOptionPane.showMessageDialog(frame, e.toString(), "Error", JOptionPane.ERROR_MESSAGE);			
+				JOptionPane.showMessageDialog(frame, e, "Create group error", JOptionPane.WARNING_MESSAGE);			
 				return;
-				}
+			}
 			this.dispose();
 		});
 	}

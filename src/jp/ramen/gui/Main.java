@@ -244,18 +244,71 @@ public class Main extends JFrame {
 			this.add(center, BorderLayout.CENTER);
 			
 			newMessage.addActionListener((e) -> {
-				MessageWindow mw;
-				try {
-					mw = new MessageWindow(frame, target);
-					mw.setVisible(true);
-				} catch (Exception ex) {
-					JOptionPane.showMessageDialog(this, ex, "Warning", JOptionPane.WARNING_MESSAGE);
-				}
+				MessageWindow mw = new MessageWindow(frame, target);
+				mw.setVisible(true);
+				fetchInbox();
 			});
 			
 			createGroup.addActionListener((e) -> {
 				CreateGroupWindow cgw = new CreateGroupWindow(frame, (Group) target);
 				cgw.setVisible(true);
+				fetchGroups();
+			});
+			
+			joinGroup.addActionListener((e) -> {
+				Group g = (Group) target;
+				if (JOptionPane.showConfirmDialog(frame, "Join this group?\n" + g.getName(), "Join group", JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION)
+					try {
+						app.joinGroup(g);
+						gTree.setSelectionPath(new TreePath(home.getPath()));
+						gTree.setSelectionPath(new TreePath(gMap.get(g).getPath()));
+					} catch (Exception ex) {
+						JOptionPane.showMessageDialog(frame, ex, "Join group error", JOptionPane.WARNING_MESSAGE);
+					}
+			});
+			
+			leaveGroup.addActionListener((e) -> {
+				Group g = (Group) target;
+				if (JOptionPane.showConfirmDialog(frame, "Leave this group?\n" + g.getName(), "Leave group", JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION)
+					try {
+						app.leaveGroup(g);
+						gTree.setSelectionPath(new TreePath(home.getPath()));
+						gTree.setSelectionPath(new TreePath(gMap.get(g).getPath()));
+					} catch (Exception ex) {
+						JOptionPane.showMessageDialog(frame, ex, "Leave group error", JOptionPane.WARNING_MESSAGE);
+					}
+			});
+			
+			block.addActionListener((e) -> {
+				Entity en = target;
+				if (JOptionPane.showConfirmDialog(frame, "Do you want to block " + en.getName() + "?", "Block", JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION)
+					try {
+						app.block(en);
+						if (en instanceof Group) {
+							gTree.setSelectionPath(new TreePath(home.getPath()));
+							gTree.setSelectionPath(new TreePath(gMap.get(en).getPath()));
+						} else {
+							//TODO users
+						}
+					} catch (Exception ex) {
+						JOptionPane.showMessageDialog(frame, ex, "Block error", JOptionPane.WARNING_MESSAGE);
+					}
+			});
+			
+			unblock.addActionListener((e) -> {
+				Entity en = target;
+				if (JOptionPane.showConfirmDialog(frame, "Do you want to unblock " + en.getName() + "?", "Unblock", JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION)
+					try {
+						app.unblock(en);
+						if (en instanceof Group) {
+							gTree.setSelectionPath(new TreePath(home.getPath()));
+							gTree.setSelectionPath(new TreePath(gMap.get(en).getPath()));
+						} else {
+							//TODO users
+						}
+					} catch (Exception ex) {
+						JOptionPane.showMessageDialog(frame, ex, "Unblock error", JOptionPane.WARNING_MESSAGE);
+					}
 			});
 			
 			gTree.addTreeSelectionListener((e) -> {
@@ -350,7 +403,10 @@ public class Main extends JFrame {
 			});
 			
 			fullPane.getSelectionModel().addListSelectionListener((e) -> {
-				target = uMap.get(e.getFirstIndex());
+				User u = uMap.get(fullPane.getSelectedRow());
+				target = u;
+				block.setEnabled(!app.getCurrentUser().getBlocked().contains(u));
+				unblock.setEnabled(!block.isEnabled());
 			});
 			
 			this.addAncestorListener(new AncestorListener() {
@@ -502,15 +558,13 @@ public class Main extends JFrame {
 				
 				reply.addActionListener((e) -> {
 					MessageWindow mw;
-					try {
-						Entity to = iMap.get(topPane.getSelectedRow()).getReference().getTo();
-						if (to instanceof User)
-							to = iMap.get(topPane.getSelectedRow()).getReference().getAuthor();
-						mw = new MessageWindow(frame, to);
-						mw.setVisible(true);
-					} catch (Exception ex) {
-						JOptionPane.showMessageDialog(this, ex, "Warning", JOptionPane.WARNING_MESSAGE);
-					}
+
+					Entity to = iMap.get(topPane.getSelectedRow()).getReference().getTo();
+					if (to instanceof User)
+						to = iMap.get(topPane.getSelectedRow()).getReference().getAuthor();
+					mw = new MessageWindow(frame, to);
+					mw.setVisible(true);
+					fetchInbox();
 				});
 				
 				remove.addActionListener((e) -> {

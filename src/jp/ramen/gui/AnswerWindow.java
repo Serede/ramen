@@ -120,8 +120,8 @@ public class AnswerWindow extends JDialog {
 		send.addActionListener(a -> {
 			try {
 				app.sendAnswer(addr, subject, texttf.getText(), question);
-			} catch (Exception e1) {
-				JOptionPane.showMessageDialog(frame, e1.toString(), "Error", JOptionPane.ERROR_MESSAGE);
+			} catch (Exception ex) {
+				JOptionPane.showMessageDialog(frame, ex, "Send answer error", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 			this.dispose();

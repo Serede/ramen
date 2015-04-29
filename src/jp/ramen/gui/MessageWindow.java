@@ -77,7 +77,7 @@ public class MessageWindow extends JDialog{
 		frame.setVisible(true);
 	};
 	
-	public MessageWindow(JFrame owner, Entity addressee) throws Exception {
+	public MessageWindow(JFrame owner, Entity addressee) {
 		super(owner, "Send a message");
 		this.setModal(true);
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
@@ -181,8 +181,8 @@ public class MessageWindow extends JDialog{
 			try {
 				app.sendMessage(e,
 				subjtf.getText(), texttf.getText(), question.isSelected());
-			} catch (Exception e1) {
-				JOptionPane.showMessageDialog(this, e1.toString(), "Error", JOptionPane.ERROR_MESSAGE);
+			} catch (Exception ex) {
+				JOptionPane.showMessageDialog(this, ex, "Message send error", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 			this.dispose();
