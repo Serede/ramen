@@ -23,8 +23,10 @@ import javax.swing.SpringLayout;
 import com.alee.laf.WebLookAndFeel;
 import com.alee.laf.text.WebTextField;
 
+import estadisticas.PieChartSample;
 import jp.ramen.Group;
 import jp.ramen.RAMEN;
+import jp.ramen.Sensei;
 import jp.ramen.SocialGroup;
 import jp.ramen.StudyGroup;
 
@@ -47,7 +49,13 @@ public class CreateGroupWindow extends JDialog {
 	
 	//Second Line
 	private JLabel name = new JLabel("Name: ");
-	private WebTextField nametf = new WebTextField();
+	private WebTextField nametf = new WebTextField(){
+		private static final long serialVersionUID = 1L;
+		public void addNotify() {
+	        super.addNotify();
+	        requestFocus();
+	    }
+	};;
 	
 	//Third Line
 	private JLabel desc = new JLabel("Desc: ");
@@ -73,6 +81,7 @@ public class CreateGroupWindow extends JDialog {
 	};
 
 	public CreateGroupWindow(JFrame owner, Group supergroup) {
+		this.setModal(true);
 		this.supergroup = supergroup;
 		this.owner = owner;
 		this.frame = this;
@@ -109,6 +118,17 @@ public class CreateGroupWindow extends JDialog {
 		box.add(inside);
 		type.add(social);
 		type.add(study);
+		
+		if(app.getCurrentUser() instanceof Sensei) {
+			study.doClick();
+			social.setEnabled(false);
+			study.setEnabled(false);
+		}
+		else {
+			social.doClick();
+			study.setEnabled(false);
+			social.setEnabled(false);
+		}
 		
 		study.addActionListener(a ->{
 			moderated.setEnabled(false);
@@ -178,7 +198,9 @@ public class CreateGroupWindow extends JDialog {
 						desctf.getText(),
 						superg, social.isSelected(), _private.isSelected(), moderated.isSelected() );
 			} catch (Exception e) {
-				JOptionPane.showMessageDialog(frame, e.toString(), "Error", JOptionPane.ERROR_MESSAGE);			}
+				JOptionPane.showMessageDialog(frame, e.toString(), "Error", JOptionPane.ERROR_MESSAGE);			
+				return;
+				}
 			this.dispose();
 		});
 	}
@@ -189,6 +211,7 @@ public class CreateGroupWindow extends JDialog {
 		RAMEN.getInstance().init();
 		RAMEN.getInstance().login("dani", "dani");
 		new CreateGroupWindow(win, null).setVisible(true);
+		PieChartSample.muestraGrafico("sadlkjdsal", 12.1, 15);
 	}
 
 }
