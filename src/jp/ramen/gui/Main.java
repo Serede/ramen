@@ -17,6 +17,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
@@ -156,6 +157,10 @@ public class Main extends JFrame {
 		private static final long serialVersionUID = 1L;
 		private static final int READ_WIDTH = 64;
 		private static final int SEARCH_WIDTH = 16;
+		private static final String NEWMESSAGE_ICN = "img/icons/round_plus.png";
+		private static final int ICN_WIDTH = 12;
+		private static final int ICN_HEIGHT = 12;
+		private static final String SEARCH_ICN = "img/icons/zoom.png";
 		
 		private ToolBar bar = new ToolBar(JToolBar.HORIZONTAL);
 		private JButton newMessage = new JButton("New message");
@@ -191,6 +196,11 @@ public class Main extends JFrame {
 			
 			search.setInputPrompt("Search...");
 			search.setHideInputPromptOnFocus(false);
+			try {
+				ImageIcon icon = new ImageIcon(ImageIO.read(new File(SEARCH_ICN)));
+				icon.setImage(icon.getImage().getScaledInstance(ICN_WIDTH+2, ICN_HEIGHT, Image.SCALE_SMOOTH));
+				search.setTrailingComponent(new JLabel(icon));
+			} catch (IOException ignore) {}
 
 			bar.setToolbarStyle(ToolbarStyle.attached);
 			bar.setFloatable(false);
@@ -199,6 +209,11 @@ public class Main extends JFrame {
 			WebButtonGroup blockButtons = new WebButtonGroup(true, block, unblock);
 			blockButtons.setButtonsDrawFocus(false);
 			bar.leftAdd(newMessage);
+			try {
+				ImageIcon icon = new ImageIcon(ImageIO.read(new File(NEWMESSAGE_ICN)));
+				icon.setImage(icon.getImage().getScaledInstance(ICN_WIDTH, ICN_HEIGHT, Image.SCALE_SMOOTH));
+				newMessage.setIcon(icon);
+			} catch (IOException ignore) {}
 			bar.leftAdd(groupButtons);
 			bar.leftAdd(blockButtons);
 			bar.rightAdd(search);
@@ -212,6 +227,42 @@ public class Main extends JFrame {
 			gTree.setRootVisible(false);
 			gTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 			gTree.setPreferredSize(new Dimension(APP_WIDTH/5,0));
+			gTree.setCellRenderer(new DefaultTreeCellRenderer() {
+				private static final long serialVersionUID = 1L;
+				private static final String HOME_ICN = "img/icons/home.png";
+				private static final String PEOPLE_ICN = "img/icons/users.png";
+				private static final String PM_ICN = "img/icons/mail.png";
+				private static final String GROUP_ICN = "img/icons/spechbubble_sq.png";
+				private static final String SUB_ICN = "img/icons/spechbubble_sq_line.png";
+				private static final String BLK_ICN = "img/icons/spechbubble_sq_cross.png";
+				private ImageIcon icon;
+
+				@Override
+				public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+					super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
+					try {
+						Object info = ((gTreeNode) value).getUserObject();
+						if (info.equals(home.getUserObject()))
+							icon = new ImageIcon(ImageIO.read(new File(HOME_ICN)));
+						else if (info.equals(people.getUserObject()))
+							icon = new ImageIcon(ImageIO.read(new File(PEOPLE_ICN)));
+						else if (info.equals(pm.getUserObject()))
+							icon = new ImageIcon(ImageIO.read(new File(PM_ICN)));
+						else if (info instanceof Group) {
+							Group g = (Group) info;
+							if(app.getCurrentUser().getBlocked().contains(g))
+								icon = new ImageIcon(ImageIO.read(new File(BLK_ICN)));
+							else if(g.getMembers().contains(app.getCurrentUser()))
+								icon = new ImageIcon(ImageIO.read(new File(SUB_ICN)));
+							else
+								icon = new ImageIcon(ImageIO.read(new File(GROUP_ICN)));
+						}
+						if (icon != null)
+							setIcon(icon);
+					} catch (IOException ignore) {}
+					return this;
+				}
+			});
 
 			String[] iHeaders = {
 					"Read",
@@ -535,6 +586,8 @@ public class Main extends JFrame {
 			
 			public JButton reply = new JButton("Reply");
 			public JButton remove = new JButton("Remove");
+			public JButton accept = new JButton("Accept");
+			public JButton reject = new JButton("Reject");
 			public JButton answer = new JButton("Answer");
 			public JButton review = new JButton("Review");
 			public JButton block = new JButton("Block user");
@@ -545,11 +598,16 @@ public class Main extends JFrame {
 				JScrollPane scroll = new JScrollPane(text);
 				JPanel bPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 				WebButtonGroup msgButtons = new WebButtonGroup(true, reply, remove);
+				msgButtons.setButtonsDrawFocus(false);
+				WebButtonGroup reqButtons = new WebButtonGroup(true, accept, reject);
+				reqButtons.setButtonsDrawFocus(false);
 				WebButtonGroup qstButtons = new WebButtonGroup(true, answer, review);
+				qstButtons.setButtonsDrawFocus(false);
 				
 				text.setEditable(false);
 				
 				bPanel.add(msgButtons);
+				bPanel.add(reqButtons);
 				bPanel.add(qstButtons);
 				bPanel.add(block);
 				
