@@ -1,9 +1,11 @@
 package jp.ramen.gui;
 
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.function.Predicate;
 
@@ -11,6 +13,8 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -159,22 +163,27 @@ public class Main extends JFrame {
 		private JButton joinGroup = new JButton("Join group");
 		private JButton leaveGroup = new JButton("Leave group");
 		private JButton block = new JButton("Block");
+		private JButton unblock = new JButton("Unblock");
 		private WebTextField search = new WebTextField(SEARCH_WIDTH);
 		private JTree gTree;
 		DefaultTreeModel tree;
 		gTreeNode home = new gTreeNode("Home");
-		gTreeNode pm = new gTreeNode("Inbox");
+		gTreeNode pm = new gTreeNode("Mailbox");
 		gTreeNode people = new gTreeNode("People");
-		HashMap<Group, gTreeNode> groups = new HashMap<>();
+		HashMap<Group, gTreeNode> gMap = new HashMap<>();
 		private JPanel center = new JPanel(new CardLayout());
+		boolean splitCard = true;
 		private WebSplitPane splitPane;
 		private JTable topPane;
 		iModel iTable;
-		HashMap<Integer, LocalMessage> inbox = new HashMap<>();
+		HashMap<Integer, LocalMessage> iMap = new HashMap<>();
+		Predicate<? super LocalMessage> iFilter = (lm) -> !lm.equals(null);
 		private DetailsPanel botPane = new DetailsPanel();
 		private WebTable fullPane;
 		DefaultTableModel uTable;
-		HashMap<Integer, User> users = new HashMap<>();
+		HashMap<Integer, User> uMap = new HashMap<>();
+		Predicate<? super User> uFilter = (u) -> !u.equals(null);
+		
 		private Entity target = null;
 		
 		public App() {
@@ -187,16 +196,18 @@ public class Main extends JFrame {
 			bar.setFloatable(false);
 			WebButtonGroup groupButtons = new WebButtonGroup(true, createGroup, joinGroup, leaveGroup);
 			groupButtons.setButtonsDrawFocus(false);
+			WebButtonGroup blockButtons = new WebButtonGroup(true, block, unblock);
+			blockButtons.setButtonsDrawFocus(false);
 			bar.leftAdd(newMessage);
 			bar.leftAdd(groupButtons);
-			bar.leftAdd(block);
+			bar.leftAdd(blockButtons);
 			bar.rightAdd(search);
 			
 			DefaultMutableTreeNode root = new DefaultMutableTreeNode();
 			tree = new DefaultTreeModel(root);
 			tree.insertNodeInto(home, root, 0);
-			tree.insertNodeInto(pm, root, 1);
-			tree.insertNodeInto(people, root, 2);
+			tree.insertNodeInto(people, root, 1);
+			tree.insertNodeInto(pm, people, 0);
 			gTree = new JTree(tree);
 			gTree.setRootVisible(false);
 			gTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
@@ -211,6 +222,7 @@ public class Main extends JFrame {
 			};
 			iTable = new iModel(iHeaders,0);
 			topPane = new WebTable(iTable);
+			topPane.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			topPane.getColumnModel().getColumn(0).setMaxWidth(READ_WIDTH);
 			
 			splitPane = new WebSplitPane(WebSplitPane.VERTICAL_SPLIT, new JScrollPane(topPane), botPane);
@@ -218,11 +230,10 @@ public class Main extends JFrame {
 			splitPane.setDividerLocation(APP_HEIGHT/3);
 			splitPane.setContinuousLayout(true);
 			
-			String[] uHeaders = {
-					"User"
-			};
+			String[] uHeaders = {"User"};
 			uTable = new DefaultTableModel(uHeaders,0);
 			fullPane = new WebTable(uTable);
+			fullPane.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			fullPane.setEditable(false);
 			
 			center.add(splitPane);
@@ -242,6 +253,11 @@ public class Main extends JFrame {
 				}
 			});
 			
+			createGroup.addActionListener((e) -> {
+				CreateGroupWindow cgw = new CreateGroupWindow(frame, (Group) target);
+				cgw.setVisible(true);
+			});
+			
 			gTree.addTreeSelectionListener((e) -> {
 				CardLayout clayout = (CardLayout) center.getLayout();
 				gTreeNode node = (gTreeNode) gTree.getLastSelectedPathComponent();
@@ -249,53 +265,92 @@ public class Main extends JFrame {
 				
 				if (node.equals(home)) {
 					clayout.first(center);
-					fetchInbox((lm) -> lm.getReference().getTo() instanceof Group);
+					splitCard = true;
 					createGroup.setEnabled(true);
 					joinGroup.setEnabled(false);
 					leaveGroup.setEnabled(false);
 					block.setEnabled(false);
+					unblock.setEnabled(false);
+					fetchGroups();
+					iFilter = (lm) -> !lm.equals(null);
+					fetchInbox();
+					target = null;
 										
 					return;
-				}
-				if (node.equals(pm)) {
-					clayout.first(center);
-					fetchInbox((lm) -> lm.getReference().getTo().equals(app.getCurrentUser()));
+				} else if (node.equals(people)) {
+					clayout.next(center);
+					splitCard = false;
 					createGroup.setEnabled(false);
 					joinGroup.setEnabled(false);
 					leaveGroup.setEnabled(false);
 					block.setEnabled(false);
+					unblock.setEnabled(false);
+					iFilter = (lm) -> !lm.equals(null);
+					fetchInbox();
+					if (fullPane.getRowCount() != 0)
+						fullPane.setSelectedRow(0);
+					else
+						target = null;
 
 					return;
-				}
-				if (node.equals(people)) {
-					clayout.next(center);
-					fetchInbox((lm) -> !lm.equals(null));
+				} else if (node.equals(pm)) {
+					clayout.first(center);
+					splitCard = true;
 					createGroup.setEnabled(false);
 					joinGroup.setEnabled(false);
 					leaveGroup.setEnabled(false);
-					block.setEnabled(true);
-					fullPane.setSelectedRow(0);
+					block.setEnabled(false);
+					unblock.setEnabled(false);
+					iFilter = (lm) -> lm.getReference().getTo().equals(app.getCurrentUser());
+					fetchInbox();
+					target = null;
 
 					return;
+				} else {
+					Object info = node.getUserObject();
+					if (info instanceof Group) {
+						Group g = (Group) info;
+						clayout.first(center);
+						splitCard = true;
+						createGroup.setEnabled(true);
+						joinGroup.setEnabled(!g.getMembers().contains(app.getCurrentUser()));
+						leaveGroup.setEnabled(!joinGroup.isEnabled());
+						block.setEnabled(!app.getCurrentUser().getBlocked().contains(g));
+						unblock.setEnabled(!block.isEnabled());
+						iFilter = (lm) -> lm.getReference().getTo().equals(info);
+						fetchInbox();
+						target = (Group) info;
+
+						return;
+					}
 				}
-				
-				Object info = node.getUserObject();
-				if (info instanceof Group) {
-					clayout.first(center);
-					fetchInbox((lm) -> lm.getReference().getTo().equals(info));
-					createGroup.setEnabled(true);
-					joinGroup.setEnabled(true);
-					leaveGroup.setEnabled(true);
-					block.setEnabled(true);
-					target = (Group) info;
-					
-					return;
-				}
-				
 			});
 			
 			topPane.getSelectionModel().addListSelectionListener((e) -> {
-				botPane.setText(inbox.get(topPane.getSelectedRow()).getReference().getText());
+				LocalMessage lm = iMap.get(topPane.getSelectedRow());
+				if(lm != null)
+					botPane.setText(lm.getReference().getText());
+			});
+			new TableCellListener(topPane, new AbstractAction() {
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					TableCellListener tcl = (TableCellListener) e.getSource();
+					int col = tcl.getColumn(), row = tcl.getRow();
+					if(tcl.getNewValue().equals(true)) {
+						try {
+							app.readMessage(iMap.get(row));
+						} catch (SQLException ex) {
+							JOptionPane.showMessageDialog(frame, ex, "Message read error", JOptionPane.WARNING_MESSAGE);
+						}
+					} else
+						topPane.setValueAt(true, row, col);	
+				}
+			});
+			
+			fullPane.getSelectionModel().addListSelectionListener((e) -> {
+				target = uMap.get(e.getFirstIndex());
 			});
 			
 			this.addAncestorListener(new AncestorListener() {
@@ -309,6 +364,39 @@ public class Main extends JFrame {
 				public void ancestorRemoved(AncestorEvent event) {}
 				@Override
 				public void ancestorMoved(AncestorEvent event) {}
+			});
+			
+			search.getDocument().addDocumentListener(new DocumentListener() {
+				@Override
+				public void changedUpdate(DocumentEvent e) {
+					String text = search.getText();
+					if (splitCard) {
+						if (text.isEmpty())
+							fetchInbox();
+						else
+							fetchInbox((lm) -> {
+								Message ref = lm.getReference();
+								return ref.getAuthor().getName().contains(text)
+										|| ref.getSubject().contains(text)
+										|| ref.getText().contains(text);
+							});
+					} else {
+						uFilter = text.isEmpty() ? (u) -> !u.equals(null)
+								: (u) -> u.getName().contains(text);
+						fetchUsers();
+					}
+					
+				}
+
+				@Override
+				public void insertUpdate(DocumentEvent e) {
+					changedUpdate(e);
+				}
+
+				@Override
+				public void removeUpdate(DocumentEvent e) {
+					changedUpdate(e);
+				}
 			});
 		}
 		
@@ -391,6 +479,7 @@ public class Main extends JFrame {
 			
 			public JButton reply = new JButton("Reply");
 			public JButton remove = new JButton("Remove");
+			public JButton answer = new JButton("Answer");
 			public JButton review = new JButton("Review");
 			public JButton block = new JButton("Block user");
 			private JTextArea text = new JTextArea();
@@ -399,15 +488,40 @@ public class Main extends JFrame {
 				super(new BorderLayout());
 				JScrollPane scroll = new JScrollPane(text);
 				JPanel bPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-				WebButtonGroup msgButtons = new WebButtonGroup(true, reply, remove, review);
+				WebButtonGroup msgButtons = new WebButtonGroup(true, reply, remove);
+				WebButtonGroup qstButtons = new WebButtonGroup(true, answer, review);
 				
 				text.setEditable(false);
 				
 				bPanel.add(msgButtons);
+				bPanel.add(qstButtons);
 				bPanel.add(block);
 				
 				this.add(bPanel, BorderLayout.NORTH);
 				this.add(scroll, BorderLayout.CENTER);
+				
+				reply.addActionListener((e) -> {
+					MessageWindow mw;
+					try {
+						Entity to = iMap.get(topPane.getSelectedRow()).getReference().getTo();
+						if (to instanceof User)
+							to = iMap.get(topPane.getSelectedRow()).getReference().getAuthor();
+						mw = new MessageWindow(frame, to);
+						mw.setVisible(true);
+					} catch (Exception ex) {
+						JOptionPane.showMessageDialog(this, ex, "Warning", JOptionPane.WARNING_MESSAGE);
+					}
+				});
+				
+				remove.addActionListener((e) -> {
+					if (JOptionPane.showConfirmDialog(frame, "Delete this message?", "Message deletion", JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION)
+						try {
+							app.delMessage(iMap.get(topPane.getSelectedRow()));
+							fetchInbox();
+						} catch (Exception ex) {
+							JOptionPane.showMessageDialog(frame, ex, "Message deletion error", JOptionPane.WARNING_MESSAGE);
+						}
+				});
 			}
 			
 			public void setText(String text) {
@@ -417,25 +531,33 @@ public class Main extends JFrame {
 		}
 		
 		private void fetchGroups() {
+			gMap.clear();
 			home.removeAllChildren();
+			tree.reload(home);
 			for (Group g : app.listGroups()) {
 				gTreeNode supernode = g.getSupergroup() == null ? home
-						: groups.get(g.getSupergroup());
+						: gMap.get(g.getSupergroup());
 				gTreeNode node = new gTreeNode(g);
 				tree.insertNodeInto(node, supernode, supernode.getChildCount());
-				groups.put(g, node);
+				gMap.put(g, node);
 			}
 			for (int i = 0; i < gTree.getRowCount(); i++)
 				gTree.expandRow(i);
 		}
-
-		private void fetchInbox(Predicate<LocalMessage> constraint) {
+		
+		private void fetchInbox() { fetchInbox((lm) -> true); }
+		private void fetchInbox(Predicate<? super LocalMessage> filter) {
 			int rows = iTable.getRowCount();
+			iMap.clear();
 			for (int i = rows-1; i>=0; i--)
 				iTable.removeRow(i);
 			app.listInbox()
 					.stream()
-					.filter(constraint)
+					.filter(iFilter)
+					.filter(filter)
+					.sorted((a,b) -> {
+						return b.getReference().getTime().compareTo(a.getReference().getTime());
+					})
 					.map((lm) -> {
 						return new Object[] {
 								lm,
@@ -450,19 +572,20 @@ public class Main extends JFrame {
 					})
 					.forEach((entry) -> {
 								iTable.addRow((Object[]) entry[1]);
-								inbox.put(iTable.getRowCount() - 1, (LocalMessage) entry[0]);
+								iMap.put(iTable.getRowCount() - 1, (LocalMessage) entry[0]);
 							});
 		}
 		
 		private void fetchUsers() {
 			int rows = uTable.getRowCount();
+			uMap.clear();
 			for (int i = rows-1; i>=0; i--)
 				uTable.removeRow(i);
-			app.listUsers().stream().map((u) -> {
+			app.listUsers().stream().filter(uFilter).map((u) -> {
 				return new Object[] { u, new Object[] { u.getName() } };
 			}).forEach((entry) -> {
 				uTable.addRow((Object[]) entry[1]);
-				users.put(uTable.getRowCount() - 1, (User) entry[0]);
+				uMap.put(uTable.getRowCount() - 1, (User) entry[0]);
 			});
 		}
 	}
