@@ -36,7 +36,13 @@ public class AnswerWindow extends JDialog {
 	private WebTextField subjtf = new WebTextField(32);
 	
 	private JLabel text = new JLabel("Text: ");
-	private JTextArea texttf = new JTextArea(6,50);
+	private JTextArea texttf = new JTextArea(6,50){
+		private static final long serialVersionUID = 1L;
+		public void addNotify() {
+	        super.addNotify();
+	        requestFocus();
+	    }
+	};
 	
 	private Entity addressee;
 	private JFrame owner;
@@ -58,9 +64,10 @@ public class AnswerWindow extends JDialog {
 		this.owner = owner;
 		this.subject = subject;
 		this.question = question;
+		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		this.setSize(WIDTH,HEIGHT);
 		this.setMinimumSize(new Dimension(WIDTH, HEIGHT));
-		
+		this.setModal(true);
 		if(addressee==null) addressee = app.getCurrentUser();
 		
 		this.setLayout(new BorderLayout());
