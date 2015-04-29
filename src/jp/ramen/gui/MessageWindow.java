@@ -121,7 +121,7 @@ public class MessageWindow extends JDialog{
 		if(addressee instanceof User) user.doClick();
 		else group.doClick();
 		
-		mlist.setSelectedItem(addressee);
+		mlist.setSelectedItem(addressee.getName());
 		sendRadioButtons.add(user);
 		sendRadioButtons.add(group);
 		radioButtons.add(user);
