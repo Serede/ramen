@@ -198,12 +198,16 @@ public class CreateGroupWindow extends JDialog {
 		
 		cancel.addActionListener(a -> this.dispose());
 		create.addActionListener(a -> {
+			String n=nametf.getText();
+			String d=desctf.getText();
+			n = n.replace("'", "");
+			d = d.replace("'", "");
 			Group superg;
 			if(mlist.getSelectedItem().equals("Home")) superg =null;
 			else superg = app.getDAO().getGdb().getGroup(((String)mlist.getSelectedItem()));
 			try {
-				app.createGroup(nametf.getText(),
-						desctf.getText(),
+				app.createGroup(n,
+						d,
 						superg, social.isSelected(), _private.isSelected(), moderated.isSelected() );
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(frame, e, "Create group error", JOptionPane.WARNING_MESSAGE);			
