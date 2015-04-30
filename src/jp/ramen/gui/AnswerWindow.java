@@ -53,6 +53,7 @@ public class AnswerWindow extends JDialog {
 		this.setSize(WIDTH,HEIGHT);
 		this.setMinimumSize(new Dimension(WIDTH, HEIGHT));
 		this.setModal(true);
+		this.setLocationRelativeTo(null);
 		if(addressee==null) addressee = app.getCurrentUser();
 		
 		this.setLayout(new BorderLayout());

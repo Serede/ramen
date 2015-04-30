@@ -69,6 +69,7 @@ public class MessageWindow extends JDialog{
 	public MessageWindow(JFrame owner, Entity addressee) {
 		super(owner, "Send a message");
 		this.setModal(true);
+		this.setLocationRelativeTo(null);
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		this.setSize(WIDTH,HEIGHT);
 		this.setMinimumSize(new Dimension(WIDTH, HEIGHT));
@@ -105,10 +106,15 @@ public class MessageWindow extends JDialog{
 		};
 		user.addActionListener(buttonSelected);
 		group.addActionListener(buttonSelected);
-		if(addressee instanceof User) user.doClick();
-		else group.doClick();
+		if(addressee instanceof User) {
+			user.doClick();
+			mlist.setSelectedItem(addressee.getName());
+		} else {
+			group.doClick();
+			mlist.setSelectedItem(((Group) addressee).getCode());
+		}
 		
-		mlist.setSelectedItem(addressee.getName());
+		
 		sendRadioButtons.add(user);
 		sendRadioButtons.add(group);
 		radioButtons.add(user);

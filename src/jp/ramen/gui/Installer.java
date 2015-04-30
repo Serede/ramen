@@ -116,7 +116,11 @@ public class Installer extends JFrame {
 				break;
 			case 3:
 				/* Setting for the card 3 */
-				System.exit(0);
+				if (card4.runNow.isSelected()) {
+					SwingUtilities.invokeLater(Main.run);
+					frame.dispose();
+				} else
+					System.exit(0);
 			}
 		});
 
@@ -376,6 +380,7 @@ public class Installer extends JFrame {
 	
 		private JLabel text1 = new JLabel("RAMEN has been successfully installed.");
 		private JLabel text2 = new JLabel("Thanks for using the application. Enjoy!");
+		public JCheckBox runNow = new JCheckBox("Start RAMEN now", true);
 		private static final String IMG = "img/minato_kushina_ramen_by_daisyanimeluvr-d35zv41.png";
 		private static final int IMG_WIDTH = 320;
 		private static final int IMG_HEIGHT = 320;
@@ -399,12 +404,15 @@ public class Installer extends JFrame {
 			this.add(image);
 			this.add(text1);
 			this.add(text2);
+			this.add(runNow);
 	
 			layout.putConstraint(SpringLayout.VERTICAL_CENTER, image, 0, SpringLayout.VERTICAL_CENTER, this);
 			layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, image, 0, SpringLayout.HORIZONTAL_CENTER, this);
 			layout.putConstraint(SpringLayout.SOUTH, text1, -12, SpringLayout.NORTH, image);
 			layout.putConstraint(SpringLayout.NORTH, text2, 12, SpringLayout.SOUTH, image);
+			layout.putConstraint(SpringLayout.NORTH, runNow, 6, SpringLayout.SOUTH, text2);
 			layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, text1, 0, SpringLayout.HORIZONTAL_CENTER, image);
+			layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, runNow, 0, SpringLayout.HORIZONTAL_CENTER, image);
 			layout.putConstraint(SpringLayout.HORIZONTAL_CENTER, text2, 0, SpringLayout.HORIZONTAL_CENTER, image);
 		}
 	}

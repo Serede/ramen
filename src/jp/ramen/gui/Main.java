@@ -50,8 +50,8 @@ public class Main extends JFrame {
 	
 	private static final int APP_HEIGHT = 720;
 	private static final int APP_WIDTH = 1280;
-	private static final int MIN_WIDTH = 420;
-	private static final int MIN_HEIGHT = 520;
+	private static final int MIN_WIDTH = 750;
+	private static final int MIN_HEIGHT = 500;
 	private static final String ICON = "img/ramen_digital_ver__by_kokororhythm-d6radm5.png";
 	private static final int ICON_HEIGHT = 512;
 	private static final int ICON_WIDTH = 512;
@@ -66,6 +66,7 @@ public class Main extends JFrame {
 			frame = new Main();
 		frame.setSize(APP_WIDTH, APP_HEIGHT);
 		frame.setMinimumSize(new Dimension(MIN_WIDTH, MIN_HEIGHT));
+		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
 	};
 	
@@ -550,6 +551,7 @@ public class Main extends JFrame {
 				@Override
 				public void ancestorAdded(AncestorEvent event) {
 					userButton.setText(app.getCurrentUser().getName());
+					botPane.setText("");
 					fetchGroups();
 					fetchUsers();
 					gTree.setSelectionPath(new TreePath(home.getPath()));

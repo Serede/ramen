@@ -67,6 +67,7 @@ public class CreateGroupWindow extends JDialog {
 
 	public CreateGroupWindow(JFrame owner, Group supergroup) {
 		this.setModal(true);
+		this.setLocationRelativeTo(null);
 		this.frame = this;
 		this.setSize(WIDTH,HEIGHT);
 		this.setMinimumSize(new Dimension(WIDTH, HEIGHT));
