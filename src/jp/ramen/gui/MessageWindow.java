@@ -189,4 +189,11 @@ public class MessageWindow extends JDialog{
 		});
 		
 	}
+	public void setSubject(String subject) {
+		subjtf.setText(subject);
+	}
+	
+	public void setSubjectEnable(boolean enable) {
+		subjtf.setEnabled(enable);
+	}
 }
