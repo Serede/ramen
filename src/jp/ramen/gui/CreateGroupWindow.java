@@ -92,7 +92,7 @@ public class CreateGroupWindow extends JDialog {
 		this.setLayout(new BorderLayout());
 		
 		if(supergroup != null) code = supergroup.getCode();
-		else code = "NONE";
+		else code = "Home";
 		JPanel buttons = new JPanel();
 		FlowLayout buttonsLayout = new FlowLayout(FlowLayout.RIGHT);
 		buttons.setLayout(buttonsLayout);
@@ -108,7 +108,7 @@ public class CreateGroupWindow extends JDialog {
 		checkBoxes.setLayout(new BoxLayout(checkBoxes,BoxLayout.Y_AXIS));
 		mlist = new DefaultComboBoxModel<String>();
 		
-		mlist.addElement("NONE");
+		mlist.addElement("Home");
 		app.listGroups().stream().map(Group::getCode).forEach(g ->mlist.addElement(g) );
 		mlist.setSelectedItem(code);
 		list = new JComboBox<String>(mlist);
@@ -151,9 +151,14 @@ public class CreateGroupWindow extends JDialog {
 		else if(supergroup instanceof StudyGroup) study.doClick();
 		else social.doClick();
 		
-		if(!(supergroup == null)&&supergroup.isModerated()) moderated.setSelected(true);
-		
-		
+		if(!(supergroup == null)&&supergroup.isModerated()) moderated.doClick();
+		if(!(supergroup == null)&&supergroup.isPrivate()) _private.doClick();
+		if(supergroup != null) {
+			social.setEnabled(false);
+			study.setEnabled(false);
+			_private.setEnabled(false);
+			moderated.setEnabled(false);
+		}
 		box.add(radioButtons);
 		box.add(list);
 		box.add(checkBoxes);
@@ -194,7 +199,7 @@ public class CreateGroupWindow extends JDialog {
 		cancel.addActionListener(a -> this.dispose());
 		create.addActionListener(a -> {
 			Group superg;
-			if(mlist.getSelectedItem().equals("NONE")) superg =null;
+			if(mlist.getSelectedItem().equals("Home")) superg =null;
 			else superg = app.getDAO().getGdb().getGroup(((String)mlist.getSelectedItem()));
 			try {
 				app.createGroup(nametf.getText(),
@@ -205,6 +210,36 @@ public class CreateGroupWindow extends JDialog {
 				return;
 			}
 			this.dispose();
+		});
+
+		list.addActionListener(a ->{
+			String c = ((String) mlist.getSelectedItem());
+			if(c.equals("Home")) {
+				social.setEnabled(true);
+				study.setEnabled(true);
+				_private.setEnabled(true);
+				moderated.setEnabled(true);
+			}
+			else {
+				Group g = app.getDAO().getGdb().getGroup(c);
+				social.setEnabled(false);
+				study.setEnabled(false);
+				_private.setEnabled(false);
+				moderated.setEnabled(false);
+				_private.setSelected(g.isPrivate());
+				moderated.setSelected(g.isModerated());
+			}
+			
+			if(app.getCurrentUser() instanceof Sensei) {
+				study.doClick();
+				social.setEnabled(false);
+				study.setEnabled(false);
+			}
+			else {
+				social.doClick();
+				study.setEnabled(false);
+				social.setEnabled(false);
+			}
 		});
 	}
 	
