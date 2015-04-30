@@ -23,6 +23,11 @@ import com.alee.laf.list.WebList;
 import estadisticas.PieChartSample;
 import jp.ramen.Question;
 
+/**
+ * Window to see the results of a question
+ * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+ */
 public class ReviewQuestionWindow extends JDialog {
 	private static final long serialVersionUID = 1L;
 	private static final int D_HEIGHT = 400;
@@ -35,6 +40,11 @@ public class ReviewQuestionWindow extends JDialog {
 	
 	private JPanel center = new JPanel();
 
+	/**
+	 * Constructor
+	 * @param owner superframe
+	 * @param question the observed question
+	 */
 	public ReviewQuestionWindow(JFrame owner, Question question) {
 		this.question = question;
 
@@ -78,6 +88,11 @@ public class ReviewQuestionWindow extends JDialog {
 		});
 	}
 
+	/**
+	 * Stats card
+	 * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+	 * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+	 */
 	private class StatsCard extends JPanel {
 		private static final long serialVersionUID = 1L;
 		private static final int LIST_WIDTH = 180;
@@ -142,6 +157,11 @@ public class ReviewQuestionWindow extends JDialog {
 		}
 	}
 
+	/**
+	 * Answer panels
+	 * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+	 * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+	 */
 	private class AnswerCard extends JPanel {
 		private static final long serialVersionUID = 1L;
 		WebAccordion center = new WebAccordion();

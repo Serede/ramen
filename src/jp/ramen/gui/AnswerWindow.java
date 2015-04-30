@@ -20,6 +20,11 @@ import jp.ramen.RAMEN;
 
 import com.alee.laf.text.WebTextField;
 
+/**
+ * Dialog to answer a question
+ * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+ */
 public class AnswerWindow extends JDialog {
 	private static final long serialVersionUID = 1L;
 	private static final int HEIGHT = 300;
@@ -46,6 +51,11 @@ public class AnswerWindow extends JDialog {
 	private Entity addressee;
 	private String subject;
 	
+	/**
+	 * Constructor
+	 * @param owner the frame
+	 * @param question the answered question 
+	 */
 	public AnswerWindow(JFrame owner, Question question) {
 		this.addressee = question.getTo();
 		this.subject = "ANS: " + question.getSubject();

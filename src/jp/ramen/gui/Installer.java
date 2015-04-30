@@ -25,6 +25,11 @@ import com.alee.extended.progress.WebStepProgress;
 import com.alee.laf.WebLookAndFeel;
 import com.alee.laf.progressbar.WebProgressBar;
 
+/**
+ * Installer interface
+ * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+ */
 public class Installer extends JFrame {
 
 	private static final long serialVersionUID = 1L;
@@ -55,6 +60,9 @@ public class Installer extends JFrame {
 	InstallCard3 card3 = new InstallCard3();
 	InstallCard4 card4 = new InstallCard4();
 
+	/**
+	 * run attribute
+	 */
 	public static Runnable run = () -> {
 		WebLookAndFeel.install();
 		try {

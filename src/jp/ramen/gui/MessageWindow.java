@@ -33,7 +33,11 @@ import jp.ramen.User;
 import com.alee.laf.checkbox.WebCheckBox;
 import com.alee.laf.text.WebTextField;
 
-
+/**
+ * Message dialog 
+ * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+ */
 public class MessageWindow extends JDialog{
 	private static final long serialVersionUID = 1L;
 	private static final int HEIGHT = 300;
@@ -66,6 +70,11 @@ public class MessageWindow extends JDialog{
 	private WebCheckBox question = new WebCheckBox("Question");
 	private JLabel limit = new JLabel(String.valueOf(LIMIT));
 	
+	/**
+	 * Constructor
+	 * @param owner superframe
+	 * @param addressee to or null
+	 */
 	public MessageWindow(JFrame owner, Entity addressee) {
 		super(owner, "Send a message");
 		this.setModal(true);
@@ -212,10 +221,18 @@ public class MessageWindow extends JDialog{
 		});
 	}
 
+	/**
+	 * Changes the subject in the message dialog
+	 * @param subject the subject
+	 */
 	public void setSubject(String subject) {
 		subjtf.setText(subject);
 	}
 
+	/**
+	 * Disable the subject field
+	 * @param enable the property
+	 */
 	public void setSubjectEnable(boolean enable) {
 		subjtf.setEnabled(enable);
 	}

@@ -44,6 +44,11 @@ import com.alee.laf.toolbar.WebToolBar;
 import com.alee.managers.popup.PopupWay;
 import com.alee.managers.popup.WebButtonPopup;
 
+/**
+ * Application interface
+ * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+ */
 public class Main extends JFrame {
 
 	private static final long serialVersionUID = 1L;
@@ -60,6 +65,9 @@ public class Main extends JFrame {
 	private Image icon;
 	private static RAMEN app = RAMEN.getInstance();
 	
+	/**
+	 * Run attribute
+	 */
 	public static Runnable run = () -> {
 		WebLookAndFeel.install();
 		if (frame == null)
@@ -70,6 +78,9 @@ public class Main extends JFrame {
 		frame.setVisible(true);
 	};
 	
+	/**
+	 * Constructor
+	 */
 	private Main() {
 		super("RAMEN");
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -95,6 +106,11 @@ public class Main extends JFrame {
 		}
 	}
 
+	/**
+	 * Login frame
+	 * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+	 * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+	 */
 	private final class Login extends JPanel {
 
 		private static final long serialVersionUID = 1L;
@@ -166,6 +182,11 @@ public class Main extends JFrame {
 		
 	}
 	
+	/**
+	 * Application frame
+	 * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+	 * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+	 */
 	private final class App extends JPanel {
 
 		private static final long serialVersionUID = 1L;
@@ -221,6 +242,9 @@ public class Main extends JFrame {
 		
 		private Entity target = null;
 		
+		/**
+		 * Constructor
+		 */
 		public App() {
 			super(new BorderLayout());
 			
@@ -613,6 +637,11 @@ public class Main extends JFrame {
 			});
 		}
 		
+		/**
+		 * Node of the tree
+		 * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+		 * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+		 */
 		private class gTreeNode extends DefaultMutableTreeNode {
 			private static final long serialVersionUID = 1L;
 
@@ -629,6 +658,11 @@ public class Main extends JFrame {
 			}
 		}	
 		
+		/**
+		 * Custom table model 
+		 * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+		 * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+		 */
 		private class iModel extends DefaultTableModel {
 			private static final long serialVersionUID = 1L;
 
@@ -647,6 +681,11 @@ public class Main extends JFrame {
 			}
 		}
 		
+		/**
+		 * Custom table model
+		 * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+		 * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+		 */
 		private class uModel extends DefaultTableModel {
 			private static final long serialVersionUID = 1L;
 
@@ -665,6 +704,11 @@ public class Main extends JFrame {
 			}
 		}
 		
+		/**
+		 * Customized toolbar
+		 * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+		 * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+		 */
 		private class ToolBar extends WebToolBar {
 			private static final long serialVersionUID = 1L;
 			private static final int BAR_HEIGHT = 32;
@@ -705,6 +749,11 @@ public class Main extends JFrame {
 			}
 		}
 		
+		/**
+		 * Panel that shows the information of a group
+		 * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+		 * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+		 */
 		private class GroupDetails extends JPanel {
 			private static final long serialVersionUID = 1L;
 			private static final int GTYPE_HEIGHT = 26;
@@ -806,6 +855,9 @@ public class Main extends JFrame {
 			public JButton blockUser = new JButton("Block user");
 			private JTextArea text = new JTextArea();
 			
+			/**
+			 * Constructor
+			 */
 			public DetailsPanel() {
 				super(new BorderLayout());
 				JScrollPane scroll = new JScrollPane(text);

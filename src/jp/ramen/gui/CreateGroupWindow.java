@@ -28,6 +28,11 @@ import jp.ramen.Sensei;
 import jp.ramen.SocialGroup;
 import jp.ramen.StudyGroup;
 
+/**
+ * Create group window
+ * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+ */
 public class CreateGroupWindow extends JDialog {
 	private static final long serialVersionUID = 1L;
 	private static final int MARGIN = 20;
@@ -65,6 +70,11 @@ public class CreateGroupWindow extends JDialog {
 	//attr
 	private CreateGroupWindow frame;
 
+	/**
+	 * Constructor
+	 * @param owner the superframe
+	 * @param supergroup the parent group if exists or null
+	 */
 	public CreateGroupWindow(JFrame owner, Group supergroup) {
 		this.setModal(true);
 		this.setLocationRelativeTo(null);

@@ -6,10 +6,14 @@ import javax.swing.*;
 
 import jp.ramen.DAO;
 
+/**
+ * Main class to launch the application or the installer
+ * @author Sergio Fuentes "sergio.fuentesd@estudiante.uam.es"
+ * @author Daniel Perdices "daniel.perdices@estudiante.uam.es"
+ */
 public class Launcher {
 
 	public static void main(String[] args) throws Exception {
-		// TODO Auto-generated method stub
 		switch (args.length) {
 		case 1:
 			if (args[0].equalsIgnoreCase("install")) {
