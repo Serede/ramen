@@ -6,6 +6,9 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.io.File;
 
+
+
+
 import javax.imageio.ImageIO;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -14,13 +17,22 @@ import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.Spring;
 import javax.swing.SpringLayout;
 import javax.swing.table.DefaultTableModel;
 
+
+
+
+import com.alee.extended.panel.WebAccordion;
 import com.alee.extended.panel.WebButtonGroup;
 import com.alee.laf.button.WebButton;
+
+
+
 
 import estadisticas.PieChartSample;
 import jp.ramen.Answer;
@@ -36,13 +48,12 @@ public class ReviewAnswersWindow extends JDialog {
 	private WebButton students = new WebButton("Students");
 	private WebButton answers = new WebButton("Answers");
 	private WebButtonGroup topButtons = new WebButtonGroup(students, answers);
-	private JFrame owner;
 	private Question question;
 	
-	private RAMEN app = RAMEN.getInstance();
 	private JPanel center = new JPanel();
 	
 	public ReviewAnswersWindow(JFrame owner, Question question) {
+		this.setModal(true);
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		this.setSize(WIDTH,HEIGHT);
 		this.setMinimumSize(new Dimension(WIDTH, HEIGHT));
@@ -53,19 +64,21 @@ public class ReviewAnswersWindow extends JDialog {
 		this.add(buttons, BorderLayout.NORTH);
 		center.setLayout(new CardLayout());
 		
-		center.add(students, "Student");
+		center.add(new StatsCard(), "stat");
+		center.add(new AnswerCard(), "answer");
 
 		
 		
 		this.add(students,BorderLayout.CENTER);
 	}
 	
-	private class StudentsCard extends JPanel {
+	private class StatsCard extends JPanel {
+		private static final long serialVersionUID = 1L;
 		private JTable table1, table2;
 		private JLabel header1, header2;
 		private JButton showPie = new JButton("Show graph");
 		private static final String ICN = "";
-		public StudentsCard() {
+		public StatsCard() {
 			SpringLayout layout = new SpringLayout();
 			this.setLayout(layout);
 			this.add(table1);
@@ -114,13 +127,28 @@ public class ReviewAnswersWindow extends JDialog {
 			layout.putConstraint(SpringLayout.SOUTH, showPie, MARGIN, SpringLayout.SOUTH, this);
 
 			showPie.addActionListener(a -> {
+				if(question.howManyAnswered()<=0&&question.howManyDidntAnswer()==0) return;
 				PieChartSample.muestraGrafico("Statistics", question.howManyAnswered(), question.howManyDidntAnswer());
 			});
 
 			
+			
 		}
 	}
 	
+	private class AnswerCard extends JPanel {
+		private static final long serialVersionUID = 1L;
+		WebAccordion center;
+		
+		public AnswerCard() {
+			question.reviewAnswers().stream().forEach(a ->{
+				JScrollPane scrollText = new JScrollPane();
+				JTextArea text = new JTextArea(a.getText());
+				text.setEditable(false);
+				center.addPane(a.getAuthor().getName(), scrollText);
+			});
+		}
+	}
 	public static void main(String[] args) throws Exception {
 		RAMEN.getInstance().init();
 		RAMEN.getInstance().login("dani", "dani");
