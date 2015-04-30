@@ -517,7 +517,7 @@ public class Main extends JFrame {
 					botPane.accept.setEnabled(msg instanceof Request);
 					botPane.decline.setEnabled(msg instanceof Request);
 					botPane.answer.setEnabled(msg instanceof Question);
-					botPane.review.setEnabled(msg instanceof Question);
+					botPane.review.setEnabled(msg instanceof Question && msg.getAuthor().equals(app.getCurrentUser()));
 					botPane.blockUser.setEnabled(!app.getCurrentUser().getBlocked().contains(msg.getAuthor()));
 				}
 			});
