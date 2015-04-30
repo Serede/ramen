@@ -571,6 +571,7 @@ public class Main extends JFrame {
 							fetchInbox((lm) -> {
 								Message ref = lm.getReference();
 								return ref.getAuthor().getName().contains(text)
+										|| ref.getTo().getName().contains(text)
 										|| ref.getSubject().contains(text)
 										|| ref.getText().contains(text);
 							});
@@ -707,7 +708,6 @@ public class Main extends JFrame {
 			private static final int GTYPE_HEIGHT = 26;
 			private static final int GTYPE_WIDTH = 64;
 			
-			//return "code=" + code + ", desc=" + desc + ", supg=" + supergroup + ", owner=" + owner;
 			private WebSwitch type = new CustomSwitch();
 			private ImageIcon social, study;
 			private JCheckBox priv = new JCheckBox("Private");
@@ -753,7 +753,6 @@ public class Main extends JFrame {
 				
 				JPanel botPart = new JPanel(new BorderLayout());
 				
-				//botPart.add(new JLabel("Description:"), BorderLayout.NORTH);
 				botPart.add(owner, BorderLayout.NORTH);
 				botPart.add(desc, BorderLayout.CENTER);
 				
@@ -762,7 +761,7 @@ public class Main extends JFrame {
 			}
 			
 			public void setGroup(Group g) {
-				((CustomSwitch) type).doSetSelected(g instanceof StudyGroup);
+				((CustomSwitch) type).doSetSelected(g instanceof SocialGroup);
 				((CustomButtonModel) priv.getModel()).doSetSelected(g.isPrivate());
 				((CustomButtonModel) mod.getModel()).doSetSelected(g.isModerated());
 				desc.setText(g.getDesc());
@@ -836,11 +835,13 @@ public class Main extends JFrame {
 				
 				reply.addActionListener((e) -> {
 					MessageWindow mw;
+					Message msg = iMap.get(topPane.getSelectedRow()).getReference();
 
-					Entity to = iMap.get(topPane.getSelectedRow()).getReference().getTo();
+					Entity to = msg.getTo();
 					if (to instanceof User)
-						to = iMap.get(topPane.getSelectedRow()).getReference().getAuthor();
+						to = msg.getAuthor();
 					mw = new MessageWindow(frame, to);
+					mw.setSubject("RE: " + msg.getSubject());
 					mw.setVisible(true);
 					fetchInbox();
 				});
