@@ -6,8 +6,6 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -23,6 +21,8 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SpringLayout;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import jp.ramen.Entity;
 import jp.ramen.Group;
@@ -30,7 +30,6 @@ import jp.ramen.RAMEN;
 import jp.ramen.Sensei;
 import jp.ramen.User;
 
-import com.alee.laf.WebLookAndFeel;
 import com.alee.laf.checkbox.WebCheckBox;
 import com.alee.laf.text.WebTextField;
 
@@ -40,7 +39,7 @@ public class MessageWindow extends JDialog{
 	private static final int HEIGHT = 300;
 	private static final int WIDTH = 480;
 	private static final int MARGIN =  10;
-	private MessageWindow frame;
+	private static final int LIMIT = 200;
 	
 	private RAMEN app = RAMEN.getInstance();
 	private JButton cancel= new JButton("Discard");
@@ -65,28 +64,12 @@ public class MessageWindow extends JDialog{
 	private JComboBox<String> list;
 	private DefaultComboBoxModel<String> mlist;
 	private WebCheckBox question = new WebCheckBox("Question");
-	private JLabel limit = new JLabel("200");
-	
-	private Entity addressee;
-	private JFrame owner;
-	
-	public Runnable run = () -> {
-		WebLookAndFeel.install();
-		try {
-			if (frame == null)
-				frame = new MessageWindow(owner, addressee);
-		} catch (Exception e) {
-			JOptionPane.showMessageDialog(frame, e);
-		}
-		frame.setVisible(true);
-	};
+	private JLabel limit = new JLabel(String.valueOf(LIMIT));
 	
 	public MessageWindow(JFrame owner, Entity addressee) {
 		super(owner, "Send a message");
 		this.setModal(true);
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-		this.owner = owner;
-		this.addressee = addressee;
 		this.setSize(WIDTH,HEIGHT);
 		this.setMinimumSize(new Dimension(WIDTH, HEIGHT));
 		
@@ -152,7 +135,7 @@ public class MessageWindow extends JDialog{
 		box.add(text);
 		box.add(scrollText);
 		box.add(limit);
-		limit.setText("200");
+		limit.setText(String.valueOf(LIMIT));
 		limit.setForeground(Color.GREEN);
 		limit.setVisible(true);
 		this.add(box, BorderLayout.CENTER);
@@ -164,7 +147,7 @@ public class MessageWindow extends JDialog{
 		layout.putConstraint(SpringLayout.VERTICAL_CENTER, list, 0, SpringLayout.VERTICAL_CENTER, radioButtons);
 		layout.putConstraint(SpringLayout.VERTICAL_CENTER, to, 0, SpringLayout.VERTICAL_CENTER, radioButtons);
 		layout.putConstraint(SpringLayout.VERTICAL_CENTER, question, 0, SpringLayout.VERTICAL_CENTER, radioButtons);
-		layout.putConstraint(SpringLayout.WEST, question, 0, SpringLayout.EAST, list);
+		layout.putConstraint(SpringLayout.WEST, question, MARGIN, SpringLayout.EAST, list);
 
 		//Subj
 		layout.putConstraint(SpringLayout.NORTH, subj, MARGIN+5, SpringLayout.SOUTH, radioButtons);
@@ -180,30 +163,29 @@ public class MessageWindow extends JDialog{
 		layout.putConstraint(SpringLayout.SOUTH, scrollText, -MARGIN, SpringLayout.NORTH, limit);
 		layout.putConstraint(SpringLayout.EAST, scrollText, -MARGIN, SpringLayout.EAST, box);
 		layout.putConstraint(SpringLayout.WEST, limit, 0, SpringLayout.WEST, scrollText);
-//		layout.putConstraint(SpringLayout.NORTH, limit, MARGIN, SpringLayout.SOUTH, scrollText);
 		layout.putConstraint(SpringLayout.SOUTH, limit, 0, SpringLayout.SOUTH, box);
 
 		box.setLayout(layout);
 		
-		texttf.addKeyListener(new KeyListener() {
-			
+		texttf.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
-			public void keyTyped(KeyEvent e) {
+			public void removeUpdate(DocumentEvent e) {
+				changedUpdate(e);
 			}
 			
 			@Override
-			public void keyReleased(KeyEvent e) {
-				System.out.println(texttf.getText().length());
-				limit.setText(String.valueOf(200-texttf.getText().length()));
+			public void insertUpdate(DocumentEvent e) {
+				changedUpdate(e);
+			}
+			
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				limit.setText(String.valueOf(LIMIT-texttf.getText().length()));
 				if(Integer.valueOf(limit.getText())>=0) limit.setForeground(Color.GREEN);
 				else limit.setForeground(Color.RED);
-				
-			}
-			
-			@Override
-			public void keyPressed(KeyEvent e) {
 			}
 		});
+		
 		cancel.addActionListener(a -> this.dispose());
 		
 		send.addActionListener(a -> {
@@ -222,6 +204,13 @@ public class MessageWindow extends JDialog{
 			}
 			this.dispose();
 		});
-		
+	}
+
+	public void setSubject(String subject) {
+		subjtf.setText(subject);
+	}
+
+	public void setSubjectEnable(boolean enable) {
+		subjtf.setEnabled(enable);
 	}
 }

@@ -20,10 +20,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SpringLayout;
 
-import com.alee.laf.WebLookAndFeel;
 import com.alee.laf.text.WebTextField;
 
-import estadisticas.PieChartSample;
 import jp.ramen.Group;
 import jp.ramen.RAMEN;
 import jp.ramen.Sensei;
@@ -66,24 +64,9 @@ public class CreateGroupWindow extends JDialog {
 	
 	//attr
 	private CreateGroupWindow frame;
-	private Group supergroup;
-	private JFrame owner;
-	
-	public Runnable run = () -> {
-		WebLookAndFeel.install();
-		try {
-			if (frame == null)
-				frame = new CreateGroupWindow(owner, supergroup);
-		} catch (Exception e) {
-			JOptionPane.showMessageDialog(frame, e);
-		}
-		frame.setVisible(true);
-	};
 
 	public CreateGroupWindow(JFrame owner, Group supergroup) {
 		this.setModal(true);
-		this.supergroup = supergroup;
-		this.owner = owner;
 		this.frame = this;
 		this.setSize(WIDTH,HEIGHT);
 		this.setMinimumSize(new Dimension(WIDTH, HEIGHT));
@@ -122,17 +105,6 @@ public class CreateGroupWindow extends JDialog {
 		type.add(social);
 		type.add(study);
 		
-		if(app.getCurrentUser() instanceof Sensei) {
-			study.doClick();
-			social.setEnabled(false);
-			study.setEnabled(false);
-		}
-		else {
-			social.doClick();
-			study.setEnabled(false);
-			social.setEnabled(false);
-		}
-		
 		study.addActionListener(a ->{
 			moderated.setEnabled(false);
 			moderated.setSelected(false);
@@ -146,6 +118,18 @@ public class CreateGroupWindow extends JDialog {
 			_private.setEnabled(true);
 			_private.setSelected(false);
 		});
+		
+		if(app.getCurrentUser() instanceof Sensei) {
+			study.doClick();
+			social.setEnabled(false);
+			study.setEnabled(false);
+		}
+		else {
+			social.doClick();
+			study.setEnabled(false);
+			social.setEnabled(false);
+		}
+		
 		
 		if(supergroup instanceof SocialGroup) social.doClick();
 		else if(supergroup instanceof StudyGroup) study.doClick();
@@ -246,14 +230,4 @@ public class CreateGroupWindow extends JDialog {
 			}
 		});
 	}
-	
-	
-	public static void main(String[] args) throws Exception {
-		JFrame win = new JFrame();
-		RAMEN.getInstance().init();
-		RAMEN.getInstance().login("dani", "dani");
-		new CreateGroupWindow(win, null).setVisible(true);
-		PieChartSample.muestraGrafico("sadlkjdsal", 12.1, 15);
-	}
-
 }
