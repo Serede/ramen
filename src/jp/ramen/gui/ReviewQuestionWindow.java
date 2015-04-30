@@ -40,7 +40,7 @@ import jp.ramen.Question;
 import jp.ramen.RAMEN;
 import jp.ramen.User;
 
-public class ReviewAnswersWindow extends JDialog {
+public class ReviewQuestionWindow extends JDialog {
 	private static final long serialVersionUID = 1L;
 	private static final int HEIGHT = 640;
 	private static final int WIDTH = 480;
@@ -52,7 +52,7 @@ public class ReviewAnswersWindow extends JDialog {
 	
 	private JPanel center = new JPanel();
 	
-	public ReviewAnswersWindow(JFrame owner, Question question) {
+	public ReviewQuestionWindow(JFrame owner, Question question) {
 		this.setModal(true);
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		this.setSize(WIDTH,HEIGHT);
@@ -77,7 +77,7 @@ public class ReviewAnswersWindow extends JDialog {
 		private JTable table1, table2;
 		private JLabel header1, header2;
 		private JButton showPie = new JButton("Show graph");
-		private static final String ICN = "";
+		private static final String ICN = "img/icons/chart_pie.png";
 		public StatsCard() {
 			SpringLayout layout = new SpringLayout();
 			this.setLayout(layout);
@@ -148,10 +148,5 @@ public class ReviewAnswersWindow extends JDialog {
 				center.addPane(a.getAuthor().getName(), scrollText);
 			});
 		}
-	}
-	public static void main(String[] args) throws Exception {
-		RAMEN.getInstance().init();
-		RAMEN.getInstance().login("dani", "dani");
-		new ReviewAnswersWindow(new JFrame(), null).setVisible(true);
 	}
 }

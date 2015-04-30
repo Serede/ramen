@@ -882,7 +882,10 @@ public class Main extends JFrame {
 					fetchInbox();
 				});
 				
-				//TODO Review
+				review.addActionListener((e) -> {
+					ReviewQuestionWindow rqw = new ReviewQuestionWindow(frame, (Question) iMap.get(topPane.getSelectedRow()).getReference());
+					rqw.setVisible(true);
+				});
 				
 				blockUser.addActionListener((e) -> {
 					Entity u = iMap.get(topPane.getSelectedRow()).getReference().getAuthor();
