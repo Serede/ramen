@@ -1,10 +1,13 @@
 package jp.ramen.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
@@ -62,6 +65,7 @@ public class MessageWindow extends JDialog{
 	private JComboBox<String> list;
 	private DefaultComboBoxModel<String> mlist;
 	private WebCheckBox question = new WebCheckBox("Question");
+	private JLabel limit = new JLabel("200");
 	
 	private Entity addressee;
 	private JFrame owner;
@@ -147,6 +151,10 @@ public class MessageWindow extends JDialog{
 		else {question.setEnabled(false);question.setVisible(false);}
 		box.add(text);
 		box.add(scrollText);
+		box.add(limit);
+		limit.setText("200");
+		limit.setForeground(Color.GREEN);
+		limit.setVisible(true);
 		this.add(box, BorderLayout.CENTER);
 		//To
 		layout.putConstraint(SpringLayout.NORTH, radioButtons, MARGIN, SpringLayout.NORTH, box);
@@ -169,31 +177,51 @@ public class MessageWindow extends JDialog{
 		layout.putConstraint(SpringLayout.WEST, text, MARGIN, SpringLayout.WEST, box);
 		layout.putConstraint(SpringLayout.NORTH, scrollText, MARGIN, SpringLayout.SOUTH, subjtf);
 		layout.putConstraint(SpringLayout.WEST, scrollText, 0, SpringLayout.WEST, subjtf);
-		layout.putConstraint(SpringLayout.SOUTH, scrollText, 0, SpringLayout.SOUTH, box);
+		layout.putConstraint(SpringLayout.SOUTH, scrollText, -MARGIN, SpringLayout.NORTH, limit);
 		layout.putConstraint(SpringLayout.EAST, scrollText, -MARGIN, SpringLayout.EAST, box);
-		
+		layout.putConstraint(SpringLayout.WEST, limit, 0, SpringLayout.WEST, scrollText);
+//		layout.putConstraint(SpringLayout.NORTH, limit, MARGIN, SpringLayout.SOUTH, scrollText);
+		layout.putConstraint(SpringLayout.SOUTH, limit, 0, SpringLayout.SOUTH, box);
+
 		box.setLayout(layout);
 		
+		texttf.addKeyListener(new KeyListener() {
+			
+			@Override
+			public void keyTyped(KeyEvent e) {
+			}
+			
+			@Override
+			public void keyReleased(KeyEvent e) {
+				System.out.println(texttf.getText().length());
+				limit.setText(String.valueOf(200-texttf.getText().length()));
+				if(Integer.valueOf(limit.getText())>=0) limit.setForeground(Color.GREEN);
+				else limit.setForeground(Color.RED);
+				
+			}
+			
+			@Override
+			public void keyPressed(KeyEvent e) {
+			}
+		});
 		cancel.addActionListener(a -> this.dispose());
 		
 		send.addActionListener(a -> {
+			String s = subjtf.getText();
+			String t = texttf.getText();
+			s = s.replace("'", "");
+			t = t.replace("'", "");
 			Entity e = group.isSelected()?app.getDAO().getGdb().getGroup((String)list.getSelectedItem()):app.getDAO().getUdb().getUser((String)list.getSelectedItem());
 			try {
+				
 				app.sendMessage(e,
-				subjtf.getText(), texttf.getText(), question.isSelected());
-			} catch (Exception ex) {
-				JOptionPane.showMessageDialog(this, ex, "Message send error", JOptionPane.WARNING_MESSAGE);
+				s, t, question.isSelected());
+			} catch (Exception e1) {
+				JOptionPane.showMessageDialog(this, e1.toString(), "Send a message", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 			this.dispose();
 		});
 		
-	}
-	public void setSubject(String subject) {
-		subjtf.setText(subject);
-	}
-	
-	public void setSubjectEnable(boolean enable) {
-		subjtf.setEnabled(enable);
 	}
 }

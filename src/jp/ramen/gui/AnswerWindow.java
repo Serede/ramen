@@ -103,8 +103,11 @@ public class AnswerWindow extends JDialog {
 		cancel.addActionListener(a -> this.dispose());
 		final Entity addr = addressee;
 		send.addActionListener(a -> {
+			subject = subject.replace("'", "");
+			String t = texttf.getText();
+			t.replace("'", "");
 			try {
-				app.sendAnswer(addr, subject, texttf.getText(), question);
+				app.sendAnswer(addr, subject, t, question);
 			} catch (Exception ex) {
 				JOptionPane.showMessageDialog(frame, ex, "Send answer error", JOptionPane.WARNING_MESSAGE);
 				return;
