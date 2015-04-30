@@ -18,7 +18,6 @@ import jp.ramen.Entity;
 import jp.ramen.Question;
 import jp.ramen.RAMEN;
 
-import com.alee.laf.WebLookAndFeel;
 import com.alee.laf.text.WebTextField;
 
 public class AnswerWindow extends JDialog {
@@ -45,25 +44,11 @@ public class AnswerWindow extends JDialog {
 	};
 	
 	private Entity addressee;
-	private JFrame owner;
 	private String subject;
-	private Question question;
-	public Runnable run = () -> {
-		WebLookAndFeel.install();
-		try {
-			if (frame == null)
-				frame = new AnswerWindow(owner, addressee, subject, question);
-		} catch (Exception e) {
-			JOptionPane.showMessageDialog(frame, e);
-		}
-		frame.setVisible(true);
-	};
 	
-	public AnswerWindow(JFrame owner, Entity addressee, String subject, Question question) {
-		this.addressee = addressee;
-		this.owner = owner;
-		this.subject = subject;
-		this.question = question;
+	public AnswerWindow(JFrame owner, Question question) {
+		this.addressee = question.getTo();
+		this.subject = "ANS: " + question.getSubject();
 		this.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 		this.setSize(WIDTH,HEIGHT);
 		this.setMinimumSize(new Dimension(WIDTH, HEIGHT));

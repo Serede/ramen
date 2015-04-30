@@ -354,4 +354,13 @@ public class RAMEN {
 	public User getCurrentUser() {
 		return currentUser;
 	}
+	
+	/**
+	 * Reloads database
+	 * @throws Exception
+	 */
+	public void reload() throws Exception {
+		ddb.refresh();
+		currentUser = ddb.getUdb().getUser(currentUser.getName());
+	}
 }

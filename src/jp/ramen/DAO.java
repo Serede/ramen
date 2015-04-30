@@ -148,7 +148,7 @@ public class DAO {
 	 * Refreshes the system from db
 	 * @throws Exception
 	 */
-	void refresh() throws Exception {
+	public void refresh() throws Exception {
 		udb.clear();
 		gdb.clear();
 		mdb.clear();

@@ -24,15 +24,25 @@ import javax.swing.tree.TreeSelectionModel;
 
 import jp.ramen.*;
 
+import com.alee.extended.button.WebSwitch;
 import com.alee.extended.image.WebDecoratedImage;
+import com.alee.extended.layout.ToolbarLayout;
 import com.alee.extended.panel.WebButtonGroup;
+import com.alee.extended.panel.WebCollapsiblePane;
+import com.alee.extended.statusbar.WebMemoryBar;
+import com.alee.extended.statusbar.WebStatusBar;
 import com.alee.laf.WebLookAndFeel;
+import com.alee.laf.button.WebButton;
+import com.alee.laf.label.WebLabel;
 import com.alee.laf.splitpane.WebSplitPane;
 import com.alee.laf.table.WebTable;
 import com.alee.laf.text.WebPasswordField;
+import com.alee.laf.text.WebTextArea;
 import com.alee.laf.text.WebTextField;
 import com.alee.laf.toolbar.ToolbarStyle;
 import com.alee.laf.toolbar.WebToolBar;
+import com.alee.managers.popup.PopupWay;
+import com.alee.managers.popup.WebButtonPopup;
 
 public class Main extends JFrame {
 
@@ -141,6 +151,9 @@ public class Main extends JFrame {
 				if(app.login(user.getText(), new String(pass.getPassword()))) {
 					CardLayout clayout = (CardLayout) frame.getContentPane().getLayout();
 					clayout.next(frame.getContentPane());
+					user.clear();
+					pass.clear();
+					badLogin.setVisible(false);
 				} else {
 					badLogin.setVisible(true);
 				}
@@ -155,12 +168,22 @@ public class Main extends JFrame {
 	private final class App extends JPanel {
 
 		private static final long serialVersionUID = 1L;
-		private static final int READ_WIDTH = 64;
+		private static final int TYPE_WIDTH = 20;
+		private static final int READ_WIDTH = 56;
 		private static final int SEARCH_WIDTH = 16;
 		private static final String NEWMESSAGE_ICN = "img/icons/round_plus.png";
 		private static final int ICN_WIDTH = 12;
 		private static final int ICN_HEIGHT = 12;
 		private static final String SEARCH_ICN = "img/icons/zoom.png";
+		private static final String REQ_ICN = "img/icons/bell.png";
+		private static final String QST_ICN = "img/icons/spechbubble.png";
+		private static final String ANS_ICN = "img/icons/spechbubble_2.png";
+		private static final String MSG_ICN = "img/icons/mail_2.png";
+		private static final String STU_ICN = "img/icons/pencil.png";
+		private static final String SEN_ICN = "img/icons/book.png";
+		private static final String UBLK_ICN = "img/icons/cancel.png";
+		private static final String USR_ICN = "img/icons/user.png";
+		private static final String FCH_ICN = "img/icons/reload.png";
 		
 		private ToolBar bar = new ToolBar(JToolBar.HORIZONTAL);
 		private JButton newMessage = new JButton("New message");
@@ -171,15 +194,21 @@ public class Main extends JFrame {
 		private JButton unblock = new JButton("Unblock");
 		private WebTextField search = new WebTextField(SEARCH_WIDTH);
 		private JTree gTree;
+		private WebCollapsiblePane gDetails;
 		DefaultTreeModel tree;
 		gTreeNode home = new gTreeNode("Home");
 		gTreeNode pm = new gTreeNode("Mailbox");
 		gTreeNode people = new gTreeNode("People");
 		HashMap<Group, gTreeNode> gMap = new HashMap<>();
 		private JPanel center = new JPanel(new CardLayout());
+		private WebStatusBar status = new WebStatusBar();
+		private WebButton userButton = new WebButton();
+		private JButton logout = new JButton("Log Out");
+		private JButton refetch = new JButton();
+		private WebMemoryBar memBar = new WebMemoryBar();
 		boolean splitCard = true;
 		private WebSplitPane splitPane;
-		private JTable topPane;
+		private WebTable topPane;
 		iModel iTable;
 		HashMap<Integer, LocalMessage> iMap = new HashMap<>();
 		Predicate<? super LocalMessage> iFilter = (lm) -> !lm.equals(null);
@@ -218,6 +247,10 @@ public class Main extends JFrame {
 			bar.leftAdd(blockButtons);
 			bar.rightAdd(search);
 			
+			gDetails = new WebCollapsiblePane("", new GroupDetails());
+			gDetails.setTitlePanePostion(SwingConstants.BOTTOM);
+			gDetails.setVisible(false);
+			
 			DefaultMutableTreeNode root = new DefaultMutableTreeNode();
 			tree = new DefaultTreeModel(root);
 			tree.insertNodeInto(home, root, 0);
@@ -231,7 +264,7 @@ public class Main extends JFrame {
 				private static final long serialVersionUID = 1L;
 				private static final String HOME_ICN = "img/icons/home.png";
 				private static final String PEOPLE_ICN = "img/icons/users.png";
-				private static final String PM_ICN = "img/icons/mail.png";
+				private static final String PM_ICN = "img/icons/inbox.png";
 				private static final String GROUP_ICN = "img/icons/spechbubble_sq.png";
 				private static final String SUB_ICN = "img/icons/spechbubble_sq_line.png";
 				private static final String BLK_ICN = "img/icons/spechbubble_sq_cross.png";
@@ -263,9 +296,14 @@ public class Main extends JFrame {
 					return this;
 				}
 			});
+			
+			JPanel leftPane = new JPanel(new BorderLayout());
+			leftPane.add(new JScrollPane(gTree), BorderLayout.CENTER);
+			leftPane.add(gDetails, BorderLayout.SOUTH);
 
 			String[] iHeaders = {
 					"Read",
+					"",
 					"Date",
 					"To",
 					"Author",
@@ -273,26 +311,54 @@ public class Main extends JFrame {
 			};
 			iTable = new iModel(iHeaders,0);
 			topPane = new WebTable(iTable);
+			topPane.getTableHeader().setReorderingAllowed(false);
 			topPane.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			topPane.setEditable(false);
 			topPane.getColumnModel().getColumn(0).setMaxWidth(READ_WIDTH);
+			topPane.getColumnModel().getColumn(1).setMaxWidth(TYPE_WIDTH);
 			
 			splitPane = new WebSplitPane(WebSplitPane.VERTICAL_SPLIT, new JScrollPane(topPane), botPane);
 			splitPane.setOneTouchExpandable(true);
 			splitPane.setDividerLocation(APP_HEIGHT/3);
 			splitPane.setContinuousLayout(true);
 			
-			String[] uHeaders = {"User"};
-			uTable = new DefaultTableModel(uHeaders,0);
+			String[] uHeaders = {
+					"",
+					"User"
+					};
+			uTable = new uModel(uHeaders,0);
 			fullPane = new WebTable(uTable);
+			topPane.getTableHeader().setReorderingAllowed(false);
 			fullPane.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 			fullPane.setEditable(false);
+			fullPane.getColumnModel().getColumn(0).setMaxWidth(TYPE_WIDTH);
 			
 			center.add(splitPane);
 			center.add(new JScrollPane(fullPane));
+			
+			try {
+				ImageIcon usrPic = new ImageIcon(ImageIO.read(new File(USR_ICN)));
+				userButton.setIcon(usrPic);
+			} catch (IOException ignore) {}
+			WebButtonPopup userPopup = new WebButtonPopup(userButton, PopupWay.upRight);
+			userPopup.setContent(logout);
+			userPopup.setDefaultFocusComponent(logout);
+			
+			try {
+				ImageIcon fchIcn = new ImageIcon(ImageIO.read(new File(FCH_ICN)));
+				refetch.setIcon(fchIcn);
+			} catch (IOException ignore) {
+				refetch.setText("Reload");
+			}
+		
+			status.add(userButton, ToolbarLayout.START);
+			status.add(memBar, ToolbarLayout.END);
+			status.add(refetch, ToolbarLayout.END);
 	
 			this.add(bar, BorderLayout.NORTH);
-			this.add(new JScrollPane(gTree), BorderLayout.WEST);
+			this.add(leftPane, BorderLayout.WEST);
 			this.add(center, BorderLayout.CENTER);
+			this.add(status, BorderLayout.SOUTH);
 			
 			newMessage.addActionListener((e) -> {
 				MessageWindow mw = new MessageWindow(frame, target);
@@ -339,7 +405,9 @@ public class Main extends JFrame {
 							gTree.setSelectionPath(new TreePath(home.getPath()));
 							gTree.setSelectionPath(new TreePath(gMap.get(en).getPath()));
 						} else {
-							//TODO users
+							int row = fullPane.getSelectedRow();
+							fetchUsers();
+							fullPane.setSelectedRow(row);
 						}
 					} catch (Exception ex) {
 						JOptionPane.showMessageDialog(frame, ex, "Block error", JOptionPane.WARNING_MESSAGE);
@@ -355,7 +423,9 @@ public class Main extends JFrame {
 							gTree.setSelectionPath(new TreePath(home.getPath()));
 							gTree.setSelectionPath(new TreePath(gMap.get(en).getPath()));
 						} else {
-							//TODO users
+							int row = fullPane.getSelectedRow();
+							fetchUsers();
+							fullPane.setSelectedRow(row);
 						}
 					} catch (Exception ex) {
 						JOptionPane.showMessageDialog(frame, ex, "Unblock error", JOptionPane.WARNING_MESSAGE);
@@ -375,6 +445,7 @@ public class Main extends JFrame {
 					leaveGroup.setEnabled(false);
 					block.setEnabled(false);
 					unblock.setEnabled(false);
+					gDetails.setVisible(false);
 					fetchGroups();
 					iFilter = (lm) -> !lm.equals(null);
 					fetchInbox();
@@ -389,6 +460,7 @@ public class Main extends JFrame {
 					leaveGroup.setEnabled(false);
 					block.setEnabled(false);
 					unblock.setEnabled(false);
+					gDetails.setVisible(false);
 					iFilter = (lm) -> !lm.equals(null);
 					fetchInbox();
 					if (fullPane.getRowCount() != 0)
@@ -405,6 +477,7 @@ public class Main extends JFrame {
 					leaveGroup.setEnabled(false);
 					block.setEnabled(false);
 					unblock.setEnabled(false);
+					gDetails.setVisible(false);
 					iFilter = (lm) -> lm.getReference().getTo().equals(app.getCurrentUser());
 					fetchInbox();
 					target = null;
@@ -421,6 +494,9 @@ public class Main extends JFrame {
 						leaveGroup.setEnabled(!joinGroup.isEnabled());
 						block.setEnabled(!app.getCurrentUser().getBlocked().contains(g));
 						unblock.setEnabled(!block.isEnabled());
+						gDetails.setTitle(g.getName());
+						((GroupDetails) gDetails.getContent()).setGroup(g);
+						gDetails.setVisible(true);
 						iFilter = (lm) -> lm.getReference().getTo().equals(info);
 						fetchInbox();
 						target = (Group) info;
@@ -432,9 +508,19 @@ public class Main extends JFrame {
 			
 			topPane.getSelectionModel().addListSelectionListener((e) -> {
 				LocalMessage lm = iMap.get(topPane.getSelectedRow());
-				if(lm != null)
-					botPane.setText(lm.getReference().getText());
+				if(lm != null) {
+					Message msg = lm.getReference();
+					botPane.setText(msg.getText());
+					botPane.reply.setEnabled(true);
+					botPane.remove.setEnabled(true);
+					botPane.accept.setEnabled(msg instanceof Request);
+					botPane.decline.setEnabled(msg instanceof Request);
+					botPane.answer.setEnabled(msg instanceof Question);
+					botPane.review.setEnabled(msg instanceof Question);
+					botPane.blockUser.setEnabled(!app.getCurrentUser().getBlocked().contains(msg.getAuthor()));
+				}
 			});
+			
 			new TableCellListener(topPane, new AbstractAction() {
 				private static final long serialVersionUID = 1L;
 
@@ -463,6 +549,7 @@ public class Main extends JFrame {
 			this.addAncestorListener(new AncestorListener() {
 				@Override
 				public void ancestorAdded(AncestorEvent event) {
+					userButton.setText(app.getCurrentUser().getName());
 					fetchGroups();
 					fetchUsers();
 					gTree.setSelectionPath(new TreePath(home.getPath()));
@@ -505,6 +592,22 @@ public class Main extends JFrame {
 					changedUpdate(e);
 				}
 			});
+			
+			logout.addActionListener((e) -> {
+				CardLayout clayout = (CardLayout) frame.getContentPane().getLayout();
+				clayout.first(frame.getContentPane());
+			});
+			
+			refetch.addActionListener((e) -> {
+				try {
+					app.reload();
+					fetchGroups();
+					fetchUsers();
+					gTree.setSelectionPath(new TreePath(home.getPath()));
+				} catch (Exception ex) {
+					JOptionPane.showMessageDialog(frame, ex, "Reload error", JOptionPane.WARNING_MESSAGE);
+				}
+			});
 		}
 		
 		private class gTreeNode extends DefaultMutableTreeNode {
@@ -533,6 +636,24 @@ public class Main extends JFrame {
 			@Override
 			public boolean isCellEditable (int row, int col) {
 				return col==0;
+			}
+			
+			@Override
+			public Class<?> getColumnClass(int columnIndex) {
+				return getValueAt(0, columnIndex).getClass();
+			}
+		}
+		
+		private class uModel extends DefaultTableModel {
+			private static final long serialVersionUID = 1L;
+
+			public uModel(String[] columnNames, int rowCount) {
+				super(columnNames, rowCount);
+			}
+
+			@Override
+			public boolean isCellEditable (int row, int col) {
+				return false;
 			}
 			
 			@Override
@@ -581,16 +702,107 @@ public class Main extends JFrame {
 			}
 		}
 		
+		private class GroupDetails extends JPanel {
+			private static final long serialVersionUID = 1L;
+			private static final int GTYPE_HEIGHT = 26;
+			private static final int GTYPE_WIDTH = 64;
+			
+			//return "code=" + code + ", desc=" + desc + ", supg=" + supergroup + ", owner=" + owner;
+			private WebSwitch type = new CustomSwitch();
+			private ImageIcon social, study;
+			private JCheckBox priv = new JCheckBox("Private");
+			private JCheckBox mod = new JCheckBox("Moderated");
+			private WebTextArea desc = new WebTextArea();
+			private JLabel owner = new JLabel();
+			
+			public GroupDetails() {
+				super(new BorderLayout());
+				
+				type.setRound(6);
+				type.setFocusable(false);
+				type.setPreferredHeight(GTYPE_HEIGHT);
+				type.setPreferredWidth(GTYPE_WIDTH);
+				try {
+					study = new ImageIcon(ImageIO.read(new File(STU_ICN)));
+					type.setLeftComponent(new WebLabel(study));
+				} catch (IOException e) {
+					type.setLeftComponent(new WebLabel("Study"));
+				}
+				try {
+					social = new ImageIcon(ImageIO.read(new File(SEN_ICN)));
+					type.setRightComponent(new WebLabel(social));
+				} catch (IOException e) {
+					type.setRightComponent(new WebLabel("Social"));
+				}
+
+				priv.setModel(new CustomButtonModel());
+				priv.setFocusable(false);
+				
+				mod.setModel(new CustomButtonModel());
+				mod.setFocusable(false);
+				
+				desc.setEditable(false);
+				desc.setBackground(this.getBackground());
+				desc.setForeground(Color.DARK_GRAY);
+				
+				JPanel topPart = new JPanel(new FlowLayout(FlowLayout.LEFT));
+				
+				topPart.add(type);
+				topPart.add(priv);
+				topPart.add(mod);
+				
+				JPanel botPart = new JPanel(new BorderLayout());
+				
+				//botPart.add(new JLabel("Description:"), BorderLayout.NORTH);
+				botPart.add(owner, BorderLayout.NORTH);
+				botPart.add(desc, BorderLayout.CENTER);
+				
+				this.add(topPart, BorderLayout.NORTH);
+				this.add(botPart, BorderLayout.CENTER);
+			}
+			
+			public void setGroup(Group g) {
+				((CustomSwitch) type).doSetSelected(g instanceof StudyGroup);
+				((CustomButtonModel) priv.getModel()).doSetSelected(g.isPrivate());
+				((CustomButtonModel) mod.getModel()).doSetSelected(g.isModerated());
+				desc.setText(g.getDesc());
+				owner.setText("Owner: " + g.getOwner().getName());
+			}
+			
+			private class CustomSwitch extends WebSwitch {
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public void setSelected(boolean enabled) {}
+				
+				public void doSetSelected(boolean b) {
+					super.setSelected(b);
+				}
+			}
+			
+			private class CustomButtonModel extends DefaultButtonModel {
+				private static final long serialVersionUID = 1L;
+
+				@Override
+				public void setSelected(boolean b) {}
+				
+				public void doSetSelected(boolean b) {
+					super.setSelected(b);
+				}
+			}
+			
+		}
+		
 		private class DetailsPanel extends JPanel {
 			private static final long serialVersionUID = 1L;
 			
 			public JButton reply = new JButton("Reply");
 			public JButton remove = new JButton("Remove");
 			public JButton accept = new JButton("Accept");
-			public JButton reject = new JButton("Reject");
+			public JButton decline = new JButton("Decline");
 			public JButton answer = new JButton("Answer");
 			public JButton review = new JButton("Review");
-			public JButton block = new JButton("Block user");
+			public JButton blockUser = new JButton("Block user");
 			private JTextArea text = new JTextArea();
 			
 			public DetailsPanel() {
@@ -599,17 +811,25 @@ public class Main extends JFrame {
 				JPanel bPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 				WebButtonGroup msgButtons = new WebButtonGroup(true, reply, remove);
 				msgButtons.setButtonsDrawFocus(false);
-				WebButtonGroup reqButtons = new WebButtonGroup(true, accept, reject);
+				WebButtonGroup reqButtons = new WebButtonGroup(true, accept, decline);
 				reqButtons.setButtonsDrawFocus(false);
 				WebButtonGroup qstButtons = new WebButtonGroup(true, answer, review);
 				qstButtons.setButtonsDrawFocus(false);
 				
 				text.setEditable(false);
 				
+				reply.setEnabled(false);
+				remove.setEnabled(false);
+				accept.setEnabled(false);
+				decline.setEnabled(false);
+				answer.setEnabled(false);
+				review.setEnabled(false);
+				blockUser.setEnabled(false);
+				
 				bPanel.add(msgButtons);
 				bPanel.add(reqButtons);
 				bPanel.add(qstButtons);
-				bPanel.add(block);
+				bPanel.add(blockUser);
 				
 				this.add(bPanel, BorderLayout.NORTH);
 				this.add(scroll, BorderLayout.CENTER);
@@ -634,6 +854,46 @@ public class Main extends JFrame {
 							JOptionPane.showMessageDialog(frame, ex, "Message deletion error", JOptionPane.WARNING_MESSAGE);
 						}
 				});
+				
+				accept.addActionListener((e) -> {
+					if (JOptionPane.showConfirmDialog(frame, "Accept this request?", "Handle request", JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION)
+						try {
+							app.handleRequest((Request) iMap.get(topPane.getSelectedRow()).getReference(), true);
+							fetchInbox();
+						} catch (Exception ex) {
+							JOptionPane.showMessageDialog(frame, ex, "Accept request error", JOptionPane.WARNING_MESSAGE);
+						}
+				});
+				
+				decline.addActionListener((e) -> {
+					if (JOptionPane.showConfirmDialog(frame, "Decline this request?", "Handle request", JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION)
+						try {
+							app.handleRequest((Request) iMap.get(topPane.getSelectedRow()).getReference(), false);
+							fetchInbox();
+						} catch (Exception ex) {
+							JOptionPane.showMessageDialog(frame, ex, "Decline request error", JOptionPane.WARNING_MESSAGE);
+						}
+				});
+				
+				answer.addActionListener((e) -> {
+					AnswerWindow aw = new AnswerWindow(frame, (Question) iMap.get(topPane.getSelectedRow()).getReference());
+					aw.setVisible(true);
+					fetchInbox();
+				});
+				
+				//TODO Review
+				
+				blockUser.addActionListener((e) -> {
+					Entity u = iMap.get(topPane.getSelectedRow()).getReference().getAuthor();
+					if (JOptionPane.showConfirmDialog(frame, "Do you want to block " + u.getName() + "?", "Block", JOptionPane.YES_NO_OPTION)==JOptionPane.YES_OPTION)
+						try {
+							app.block(u);
+							blockUser.setEnabled(false);
+							fetchUsers();
+						} catch (Exception ex) {
+							JOptionPane.showMessageDialog(frame, ex, "Block error", JOptionPane.WARNING_MESSAGE);
+						}
+				});
 			}
 			
 			public void setText(String text) {
@@ -651,6 +911,7 @@ public class Main extends JFrame {
 						: gMap.get(g.getSupergroup());
 				gTreeNode node = new gTreeNode(g);
 				tree.insertNodeInto(node, supernode, supernode.getChildCount());
+				
 				gMap.put(g, node);
 			}
 			for (int i = 0; i < gTree.getRowCount(); i++)
@@ -671,16 +932,29 @@ public class Main extends JFrame {
 						return b.getReference().getTime().compareTo(a.getReference().getTime());
 					})
 					.map((lm) -> {
+						ImageIcon icon;
+						Message msg = lm.getReference();
+						try {
+							if (msg instanceof Request)
+								icon = new ImageIcon(ImageIO.read(new File(REQ_ICN)));
+							else if (msg instanceof Question)
+								icon = new ImageIcon(ImageIO.read(new File(QST_ICN)));
+							else if (msg instanceof Answer)
+								icon = new ImageIcon(ImageIO.read(new File(ANS_ICN)));
+							else
+								icon = new ImageIcon(ImageIO.read(new File(MSG_ICN)));
+						} catch (Exception e) {
+							icon = new ImageIcon();
+						}
 						return new Object[] {
 								lm,
 								new Object[] {
 										lm.isRead(),
+										icon,
 										lm.getReference().getTime().getTime().toString(),
 										lm.getReference().getTo().getName(),
 										lm.getReference().getAuthor().getName(),
-										lm.getReference().getSubject()
-										}
-								};
+										lm.getReference().getSubject() } };
 					})
 					.forEach((entry) -> {
 								iTable.addRow((Object[]) entry[1]);
@@ -694,7 +968,20 @@ public class Main extends JFrame {
 			for (int i = rows-1; i>=0; i--)
 				uTable.removeRow(i);
 			app.listUsers().stream().filter(uFilter).map((u) -> {
-				return new Object[] { u, new Object[] { u.getName() } };
+				ImageIcon icon;
+				try {
+					if (app.getCurrentUser().getBlocked().contains(u))
+						icon = new ImageIcon(ImageIO.read(new File(UBLK_ICN)));
+					else if (u instanceof Student)
+						icon = new ImageIcon(ImageIO.read(new File(STU_ICN)));
+					else
+						icon = new ImageIcon(ImageIO.read(new File(SEN_ICN)));
+				} catch (Exception e) {
+					icon = new ImageIcon();
+				}
+				return new Object[] { u, new Object[] {
+						icon,
+						u.getName() } };
 			}).forEach((entry) -> {
 				uTable.addRow((Object[]) entry[1]);
 				uMap.put(uTable.getRowCount() - 1, (User) entry[0]);
